@@ -23,13 +23,13 @@ bands_array = pd.array(dataset_header)
 print("WAVEBANDS")
 print(bands_array)
 
-# Make array for central wavelengths of the bands(each of them)
+# Make array for central wavelengths of the bands(each of them) /// Hard to find wavelengths in Surveys web pages (need to be checked again)
 central_values = ["0.355", "0.468", "0.616", "0.748", "0.893", "0.243", "0.240", "0.234", "0.227", "0.214", "1.00", "1.250", "1.650", "2.150", "3.226", "11.332", "1.96", "11.326", "3.353", "4.603", "11.56"]
 central_array = np.array(central_values)
 print("CENTRAL WAVELENGTHS")
 print(central_array)
 
-# Make another array for width of wavelengths of the bands(each of them)
+# Make another array for width of wavelengths of the bands(each of them) // Never found them(that's why some of them are not defined)
 width_values = ["n/d", "n/d", "n/d", "n/d", "n/d", "n/d", "n/d", "n/d", "n/d", "n/d", "0.120", "0.213", "0.307", "0.390", "n/d", "n/d", "n/d", "n/d", "0.663", "1.042", "5.506"]
 width_array = np.array(width_values)
 print("WIDTHS OF WAVELENGTHS")

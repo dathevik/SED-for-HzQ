@@ -1,0 +1,430 @@
+# Macro which computes the sed fit for QSOs in input for plotsed_all.sm
+# It is the fourth macro to call
+# 
+# sed_QSOs_allB 1
+#
+# sed_QSOsB 1
+#
+# sed_QSO_SELB
+#
+# sed_QSO_PS1allB 
+#
+# sed_QSO_PS1lowB
+#
+# sed_QSO_PS1lhighB
+
+
+sed_QSOs_allB 1
+
+	#---sed of QSOs all
+	sed_QSOsB $1
+	
+	
+sed_QSOsB 1
+
+	set z_vec = 5.5, 9.0, 0.1
+
+	#--concatenate the redshift
+	set z_vec_all = z_vec concat z_vec  concat z_vec concat z_vec
+	
+	#---lenght of vector 
+	set len = 0, dimen(z_vec)-1, 1.
+	
+	#---concatenate type
+	set len_all = len concat len concat len concat len
+
+	#---set the SELSING template
+	set x0 = xSE
+	set y0 = ySE
+		
+	set dimen(TchiTSQSO) = 0
+	set dimen(TTempSQSO) = 0
+	set dimen(TchiTPS1aSQSO) = 0
+	set dimen(TTempPS1aQSO) = 0
+	set dimen(TchiTPS1lSQSO) = 0
+	set dimen(TTempPS1lQSO) = 0
+	set dimen(TchiTPS1hSQSO) = 0
+	set dimen(TTempPS1hQSO) = 0
+
+	#---SED fit of the QSO SELSING Template
+	sed_QSO_SELB $1
+	
+	#---SED fit of the QSO PS1 all
+	sed_QSO_PS1allB $1
+	
+	#---SED fit of the QSO PS1 low Lya
+	sed_QSO_PS1lowB $1
+
+	#---SED fit of the QSO PS1 high Lya
+	sed_QSO_PS1highB $1	
+	   	     
+	#---concatenate the chi square
+	set TchiTallSQSO =  TchiTPS1hSQSO concat TchiTSQSO concat TchiTPS1aSQSO concat TchiTPS1lSQSO
+
+	#---concatenate the type
+	set TTempallQSO = TTempPS1hQSO concat TTempSQSO concat TTempPS1aQSO concat TTempPS1lQSO 
+		
+	echo "---Fluxes of QSOs--"
+	#print {modelT0 indata TchiT0 TchiTS0}
+	#echo "---Selsing template---"
+	#print {TchiTSQSO TTempSQSO}
+	#echo "---PS1 all---"
+	#print {TchiTPS1aSQSO TTempPS1aQSO}
+	#echo "---all togheter---"
+	#print {TchiTallSQSO TTempallQSO}
+	
+
+	#---Probability for QSOs
+	#set P_QSO = -1/(2*3.1415)*exp((TchiTSQSO**2)/2)
+        #set lP_QSO = ln(1/(2*3.1415))*(-TchiTallSQSO/2)
+               
+       
+        #--Best of Quasars
+        set sorter = TchiTallSQSO
+        set z_vec_tmp = z_vec_all
+        #set lP_QSO_tmp= lP_QSO
+        set len_tmp = len_all
+	set TTempallQSO_tmp = TTempallQSO
+        sort {sorter z_vec_tmp len_tmp TTempallQSO_tmp}
+        set best_z_QSO = z_vec_tmp[0]
+        set best_Tchi_QSO = sorter[0]
+        #set best_lP_QSO = lP_QSO_tmp[0]
+        set best_len	= len_tmp[0]
+	set best_TTempallQSO = TTempallQSO_tmp[0]
+       
+        #---save the photometry of best QSOs
+	set cond_PS1h = (best_TTempallQSO==1)?1:0
+	set cond_SE   = (best_TTempallQSO==2)?1:0
+	set cond_PS1a = (best_TTempallQSO==3)?1:0
+	set cond_PS1l = (best_TTempallQSO==4)?1:0
+		
+        #set best_phot_QSOs = modelQT$(best_len)
+        set best_phot_QSOs1 = modelQTPS1h$(best_len)  if(cond_PS1h)
+        set best_phot_QSOs2 = modelQT$(best_len)      if(cond_SE)
+        set best_phot_QSOs3 = modelQTPS1a$(best_len)  if(cond_PS1a)
+        set best_phot_QSOs4 = modelQTPS1l$(best_len)  if(cond_PS1l)
+
+	
+	#---for future reference
+	set best_phot_QSOs  =  best_phot_QSOs$(best_TTempallQSO) 
+       
+        #echo "Totale per le Dwarf in ordine"
+        #print {typeSD_tmp sorter}
+	echo ----Best QSO---
+        print {best_z_QSO best_Tchi_QSO best_TTempallQSO}
+	#print {sorter z_vec_tmp TTempallQSO_tmp}
+
+
+
+sed_QSO_SELB 1
+
+
+	do k = 0, dimen(z_vec)-1 {
+	   
+
+	   set x=x0*(1.+z_vec[$k])
+	   set yGP=gp_model(x,z_vec[$k])
+	   set y=y0*yGP
+	   magnitude2 $1
+	   set yQSO_tmp = $m1
+	   #set $1_data = Do$1[$i]
+	   set y=y*10.**(0.4*($m1-$1_data))
+	     	
+	   #---Fluxes for qso templates  	
+	   #---panstarrs     	
+	   magnitude2 i_ps   	
+	   set i_psT$k = $f1*1e17 	
+	   magnitude2 z_ps   	
+	   set z_psT$k = $f1*1e17 	
+	   magnitude2 y_ps   	
+	   set y_psT$k = $f1*1e17	
+	   #---DECam
+	   magnitude2 g_decam
+	   set g_decT$k = $f1*1e17
+	   magnitude2 r_decam
+	   set r_decT$k = $f1*1e17
+	   magnitude2 z_decam
+	   set z_decT$k = $f1*1e17	   
+	   #--sdss MOMENTARY for Z_NTT
+	   magnitude2 z
+	   set z_sdssT$k = $f1*1e17	   
+	   #--I_NTT
+	   magnitude2 i_ef
+	   set I_NTTT$k = $f1*1e17	   
+	   #---UKIDSS
+	   magnitude2 Y_ab
+	   set Y_ukT$k = $f1*1e17
+	   magnitude2 J_ab
+	   set J_ukT$k = $f1*1e17
+	   magnitude2 H_ab
+	   set H_ukT$k = $f1*1e17
+	   magnitude2 K_ab
+	   set K_ukT$k = $f1*1e17
+	   #---VHS   	
+	   magnitude2 Y_ab   	
+	   set YT$k = $f1*1e17     	
+	   magnitude2 J_ab   	
+	   set JT$k = $f1*1e17     	
+	   magnitude2 H_ab   	
+	   set HT$k = $f1*1e17     	
+	   magnitude2 K_ab
+	   set KT$k = $f1*1e17
+	   #---wise
+	   magnitude2 W1AB   	
+	   set W1T$k = $f1*1e17     	
+	   magnitude2 W2AB
+	   set W2T$k = $f1*1e17
+
+	   set modelaQT$k = i_psT$k concat I_NTTT$k concat z_psT$k concat z_decT$k concat y_psT$k 
+	 #  set modelaQT$k = z_psT$k concat z_decT$k 
+	   set modelbQT$k = YT$k concat JT$k concat HT$k concat KT$k concat W1T$k concat W2T$k
+	   set modelQT$k = modelaQT$k concat modelbQT$k
+
+  	   set TchiQT$k=((indata-modelQT$k)*(indata-modelQT$k))/(inerror**2)
+	   #set Tchi$k=(condlim&&modelT$k>indata)?1e+6:((indata-modelT$k)*(indata-modelT$k))/(inerror**2)
+	   #---limit: modello sotto dato --> P = 0 --> bene!
+  	   #set Tchi$k=(condlim&&modelT$k<=indata)?0:Tchi$k
+	   set TchiQTS$k = sum(TchiQT$k)
+	   set TchiTSQSO = TchiTSQSO concat TchiQTS$k
+	   
+	}
+
+	#---set the vector with the type of template
+	#---Selsing template : 1.
+	set TTempSQSO = (TchiTSQSO - TchiTSQSO) + 2.
+
+
+sed_QSO_PS1allB 1
+ 
+
+	do k = 0, dimen(z_vec)-1 {
+	   
+	   set x=xPS1a*(1.+z_vec[$k])
+	   set yGP=gp_model(x,z_vec[$k])
+	   set y=yPS1a*yGP
+	   magnitude2 $1
+	   set yQSO_tmp = $m1
+	   #set $1_data = Do$1[$i]
+	   set y=y*10.**(0.4*($m1-$1_data))
+	     	
+	   #---Fluxes for qso templates  	
+	   #---panstarrs     	
+	   magnitude2 i_ps   	
+	   set i_psTPS1a$k = $f1*1e17 	
+	   magnitude2 z_ps   	
+	   set z_psTPS1a$k = $f1*1e17 	
+	   magnitude2 y_ps   	
+	   set y_psTPS1a$k = $f1*1e17	
+	   #---DECam
+	   magnitude2 g_decam
+	   set g_decTPS1a$k = $f1*1e17
+	   magnitude2 r_decam
+	   set r_decTPS1a$k = $f1*1e17
+	   magnitude2 z_decam
+	   set z_decTPS1a$k = $f1*1e17	   
+	   #--sdss MOMENTARY for Z_NTT
+	   magnitude2 z
+	   set z_sdssTPS1a$k = $f1*1e17	   
+	   #--I_NTT
+	   magnitude2 i_ef
+	   set I_NTTTPS1a$k = $f1*1e17	   
+	   #---UKIDSS
+	   magnitude2 Y_ab
+	   set Y_ukTPS1a$k = $f1*1e17
+	   magnitude2 J_ab
+	   set J_ukTPS1a$k = $f1*1e17
+	   magnitude2 H_ab
+	   set H_ukTPS1a$k = $f1*1e17
+	   magnitude2 K_ab
+	   set K_ukTPS1a$k = $f1*1e17
+	   #---VHS   	
+	   magnitude2 Y_ab   	
+	   set YTPS1a$k = $f1*1e17     	
+	   magnitude2 J_ab   	
+	   set JTPS1a$k = $f1*1e17     	
+	   magnitude2 H_ab   	
+	   set HTPS1a$k = $f1*1e17     	
+	   magnitude2 K_ab
+	   set KTPS1a$k = $f1*1e17
+	   #---wise
+	   magnitude2 W1AB   	
+	   set W1TPS1a$k = $f1*1e17     	
+	   magnitude2 W2AB
+	   set W2TPS1a$k = $f1*1e17
+
+	   set modelaQTPS1a$k = i_psTPS1a$k concat I_NTTTPS1a$k concat z_psTPS1a$k concat z_decTPS1a$k concat y_psTPS1a$k 
+	 #  set modelaQT$k = z_psT$k concat z_decT$k 
+	   set modelbQTPS1a$k = YTPS1a$k concat JTPS1a$k concat HTPS1a$k concat KTPS1a$k concat W1TPS1a$k concat W2TPS1a$k
+	   set modelQTPS1a$k = modelaQTPS1a$k concat modelbQTPS1a$k
+
+  	   set TchiQTPS1a$k=((indata-modelQTPS1a$k)*(indata-modelQTPS1a$k))/(inerror**2)
+	   #set Tchi$k=(condlim&&modelT$k>indata)?1e+6:((indata-modelT$k)*(indata-modelT$k))/(inerror**2)
+	   #---limit: modello sotto dato --> P = 0 --> bene!
+  	   #set Tchi$k=(condlim&&modelT$k<=indata)?0:Tchi$k
+	   set TchiQTPS1aS$k = sum(TchiQTPS1a$k)
+	   set TchiTPS1aSQSO = TchiTPS1aSQSO concat TchiQTPS1aS$k
+	   
+	}
+
+	#---set the vector with the type of template
+	#---PS1 all template : 2.
+	set TTempPS1aQSO = (TchiTPS1aSQSO - TchiTPS1aSQSO) + 3.
+
+
+
+sed_QSO_PS1lowB 1
+ 
+
+	do k = 0, dimen(z_vec)-1 {
+	   
+	   set x=xPS1l*(1.+z_vec[$k])
+	   set yGP=gp_model(x,z_vec[$k])
+	   set y=yPS1l*yGP
+	   magnitude2 $1
+	   set yQSO_tmp = $m1
+	   #set $1_data = Do$1[$i]
+	   set y=y*10.**(0.4*($m1-$1_data))
+	     	
+	   #---Fluxes for qso templates  	
+	   #---panstarrs     	
+	   magnitude2 i_ps   	
+	   set i_psTPS1l$k = $f1*1e17 	
+	   magnitude2 z_ps   	
+	   set z_psTPS1l$k = $f1*1e17 	
+	   magnitude2 y_ps   	
+	   set y_psTPS1l$k = $f1*1e17	
+	   #---DECam
+	   magnitude2 g_decam
+	   set g_decTPS1l$k = $f1*1e17
+	   magnitude2 r_decam
+	   set r_decTPS1l$k = $f1*1e17
+	   magnitude2 z_decam
+	   set z_decTPS1l$k = $f1*1e17	   
+	   #--sdss MOMENTARY for Z_NTT
+	   magnitude2 z
+	   set z_sdssTPS1l$k = $f1*1e17	   
+	   #--I_NTT
+	   magnitude2 i_ef
+	   set I_NTTTPS1l$k = $f1*1e17	   
+	   #---UKIDSS
+	   magnitude2 Y_ab
+	   set Y_ukTPS1l$k = $f1*1e17
+	   magnitude2 J_ab
+	   set J_ukTPS1l$k = $f1*1e17
+	   magnitude2 H_ab
+	   set H_ukTPS1l$k = $f1*1e17
+	   magnitude2 K_ab
+	   set K_ukTPS1l$k = $f1*1e17
+	   #---VHS   	
+	   magnitude2 Y_ab   	
+	   set YTPS1l$k = $f1*1e17     	
+	   magnitude2 J_ab   	
+	   set JTPS1l$k = $f1*1e17     	
+	   magnitude2 H_ab   	
+	   set HTPS1l$k = $f1*1e17     	
+	   magnitude2 K_ab
+	   set KTPS1l$k = $f1*1e17
+	   #---wise
+	   magnitude2 W1AB   	
+	   set W1TPS1l$k = $f1*1e17     	
+	   magnitude2 W2AB
+	   set W2TPS1l$k = $f1*1e17
+
+	   set modelaQTPS1l$k = i_psTPS1l$k concat I_NTTTPS1l$k concat z_psTPS1l$k concat z_decTPS1l$k concat y_psTPS1l$k 
+	 #  set modelaQT$k = z_psT$k concat z_decT$k 
+	   set modelbQTPS1l$k = YTPS1l$k concat JTPS1l$k concat HTPS1l$k concat KTPS1l$k concat W1TPS1l$k concat W2TPS1l$k
+	   set modelQTPS1l$k = modelaQTPS1l$k concat modelbQTPS1l$k
+
+  	   set TchiQTPS1l$k=((indata-modelQTPS1l$k)*(indata-modelQTPS1l$k))/(inerror**2)
+	   #set Tchi$k=(condlim&&modelT$k>indata)?1e+6:((indata-modelT$k)*(indata-modelT$k))/(inerror**2)
+	   #---limit: modello sotto dato --> P = 0 --> bene!
+  	   #set Tchi$k=(condlim&&modelT$k<=indata)?0:Tchi$k
+	   set TchiQTPS1lS$k = sum(TchiQTPS1l$k)
+	   set TchiTPS1lSQSO = TchiTPS1lSQSO concat TchiQTPS1lS$k
+	   
+	}
+
+	#---set the vector with the type of template
+	#---PS1 all template : 2.
+	set TTempPS1lQSO = (TchiTPS1lSQSO - TchiTPS1lSQSO) + 4.
+
+
+
+sed_QSO_PS1highB 1
+ 
+
+	do k = 0, dimen(z_vec)-1 {
+	   
+	   set x=xPS1h*(1.+z_vec[$k])
+	   set yGP=gp_model(x,z_vec[$k])
+	   set y=yPS1h*yGP
+	   magnitude2 $1
+	   set yQSO_tmp = $m1
+	   #set $1_data = Do$1[$i]
+	   set y=y*10.**(0.4*($m1-$1_data))
+	     	
+	   #---Fluxes for qso templates  	
+	   #---panstarrs     	
+	   magnitude2 i_ps   	
+	   set i_psTPS1h$k = $f1*1e17 	
+	   magnitude2 z_ps   	
+	   set z_psTPS1h$k = $f1*1e17 	
+	   magnitude2 y_ps   	
+	   set y_psTPS1h$k = $f1*1e17	
+	   #---DECam
+	   magnitude2 g_decam
+	   set g_decTPS1h$k = $f1*1e17
+	   magnitude2 r_decam
+	   set r_decTPS1h$k = $f1*1e17
+	   magnitude2 z_decam
+	   set z_decTPS1h$k = $f1*1e17	   
+	   #--sdss MOMENTARY for Z_NTT
+	   magnitude2 z
+	   set z_sdssTPS1h$k = $f1*1e17	   
+	   #--I_NTT
+	   magnitude2 i_ef
+	   set I_NTTTPS1h$k = $f1*1e17	   
+	   #---UKIDSS
+	   magnitude2 Y_ab
+	   set Y_ukTPS1h$k = $f1*1e17
+	   magnitude2 J_ab
+	   set J_ukTPS1h$k = $f1*1e17
+	   magnitude2 H_ab
+	   set H_ukTPS1h$k = $f1*1e17
+	   magnitude2 K_ab
+	   set K_ukTPS1h$k = $f1*1e17
+	   #---VHS   	
+	   magnitude2 Y_ab   	
+	   set YTPS1h$k = $f1*1e17     	
+	   magnitude2 J_ab   	
+	   set JTPS1h$k = $f1*1e17     	
+	   magnitude2 H_ab   	
+	   set HTPS1h$k = $f1*1e17     	
+	   magnitude2 K_ab
+	   set KTPS1h$k = $f1*1e17
+	   #---wise
+	   magnitude2 W1AB   	
+	   set W1TPS1h$k = $f1*1e17     	
+	   magnitude2 W2AB
+	   set W2TPS1h$k = $f1*1e17
+
+	   set modelaQTPS1h$k = i_psTPS1h$k concat I_NTTTPS1h$k concat z_psTPS1h$k concat z_decTPS1h$k concat y_psTPS1h$k 
+	 #  set modelaQT$k = z_psT$k concat z_decT$k 
+	   set modelbQTPS1h$k = YTPS1h$k concat JTPS1h$k concat HTPS1h$k concat KTPS1h$k concat W1TPS1h$k concat W2TPS1h$k
+	   set modelQTPS1h$k = modelaQTPS1h$k concat modelbQTPS1h$k
+
+  	   set TchiQTPS1h$k=((indata-modelQTPS1h$k)*(indata-modelQTPS1h$k))/(inerror**2)
+	   #set Tchi$k=(condlim&&modelT$k>indata)?1e+6:((indata-modelT$k)*(indata-modelT$k))/(inerror**2)
+	   #---limit: modello sotto dato --> P = 0 --> bene!
+  	   #set Tchi$k=(condlim&&modelT$k<=indata)?0:Tchi$k
+	   set TchiQTPS1hS$k = sum(TchiQTPS1h$k)
+	   set TchiTPS1hSQSO = TchiTPS1hSQSO concat TchiQTPS1hS$k
+	   
+	}
+
+	#---set the vector with the type of template
+	#---PS1 all template : 2.
+	set TTempPS1hQSO = (TchiTPS1hSQSO - TchiTPS1hSQSO) + 1.
+
+
+	

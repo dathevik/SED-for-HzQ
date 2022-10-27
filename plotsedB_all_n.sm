@@ -1,0 +1,303 @@
+# Macro which plots a qso sed, a BD sed and the photometric points from data
+#
+# read_libB : read all the necessary libraries
+# 
+# sed_all2B 6 : $1 decide here the band to which base your SED fit
+#             : $2 name of the folder in which you should have a input_ascii subfolder
+#	      : $3 name of the input file :  "data'$3'_mag*.dat"
+#             : $4 insert if you want to use ps1 follow up force photometry (1) or from catalog (0)
+#             : $5 insert 1 if you want to print pngs, 2 print on terminal, 0 no print
+#             : $6 name of the output folder in which you should have a subfolder called 'pngs'
+#
+#
+#       cp /usr/local2/misc/sm/sm2_4_36/lib/sm/.sm $home/
+#	macro read "/a41233d1/mazzuchelli/sm/tools/rmac_v7.sm"
+#	macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/readimages.sm"
+#       macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_defvec.sm"
+#       macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_read.sm"
+#       macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_BDsedfit.sm"
+#       macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_QSOsedfit.sm"
+#       macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_chi2Red.sm"
+#       macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_plotall.sm"
+
+
+read_libB
+
+	#---Read libraries
+	macro read "/a41233d1/mazzuchelli/sm/tools/rmac_v7.sm"
+	macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/readimages.sm"
+        macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_defvec.sm"
+        macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_read.sm"
+        macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_BDsedfit.sm"
+        macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_QSOsedfit.sm"
+        macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_chi2Red.sm"
+        macro read "/a41233d1/mazzuchelli/plotsed/sm_macro/plotsedB_plotall.sm"
+	
+	#--define colors
+	xtcolors
+	
+
+sed_all2B 6
+
+	#---Define the used bands
+	define_bandsB
+
+	#---Read the templates of BDs and QSOs and the input data
+	#---and define the case of a limit
+	echo "-----Read Template--"
+	read_allB $2 $3 $4 
+
+	#--Apply the shift with redshift + GP effect
+	echo "---Shift with Redshift and apply GP----"
+	temp_qso_redB $1 $2 $3 $4 $5 $6
+				
+
+#################################
+
+	
+temp_qso_redB 5
+ # $1 : bands to which normalize the templates
+
+	#---scale the template to the y band magnitude
+	#---scale with the y_ps for known qso
+
+	#--Shift and apply  GP effect
+	#set x0 = xVD
+	#set y0 = yVD
+
+	#---delete summarizing files
+	!rm -fr "$!2/sumSED_$!3.txt"
+
+	set DoK_ab= DoK	
+	set DoH_ab = DoH
+	set DoY_ab = DoY		
+
+	set Dotmpi_ps = Doi_ps
+	set Dotmpz_ps = Doz_ps
+	set Dotmpz_sdss = Doz_ps
+	set Dotmpy_ps = Doy_ps
+	set Dotmpg_dec = Dog_dec
+	set Dotmpr_dec = Dor_dec
+	set Dotmpz_dec = Doz_dec
+	set DotmpI_NTT = Doz_dec	
+	set DotmpY = DoY
+	set DotmpJ = DoJ
+	set DotmpH = DoH
+	set DotmpK = DoK
+	set DotmpW1 = DoW1
+	set DotmpW2 = DoW2
+
+	set con_tmp = (idy==129)?1:0
+	set inf =  $(dimen(name))-1 
+	set ind = 0,  $(inf[0]), 1
+	set ind_tmp = ind   if(con_tmp)
+
+	#-----scale the template to GP and redshift----
+	do i=0, dimen(name)-1{            
+	#do i = 1, 2      
+
+
+	   set dimen(indata_tmp)  = 0
+	   set dimen(indata_tmp2) = 0
+	   set dimen(inmag)   = 0
+	   set dimen(inmag_tmp) = 0
+	   set dimen(inerror_tmp) = 0
+	   set dimen(inerror2) = 0
+	   set dimen(inmage)  = 0
+	   set dimen(condlim) = 0
+	   set dimen(condlimps1) = 0
+           set dimen(condlimdec) = 0
+	   set dimen(insnr)    = 0
+	
+
+	   echo "--------In fluxes in erg/cm-2/A/s---------"
+	   #---Translate magnitudes to fluxes
+	   foreach j {i_ps I_NTT z_ps z_dec y_ps Y J H K W1 W2} {
+	   #foreach j {z_ps z_dec Y J H K W1 W2} 
+		  #---limits for non detection in ukidss
+                  set Da$j[$i] = (Do$j[$i]< 0.00001)?0:(3*10**((23.9-Do$j[$i])/2.5)*10**(-11)/(l$j**2))
+		  set Datmp$j[$i] = 3*10**((23.9-Dotmp$j[$i])/2.5)*10**(-11)/(l$j**2)
+		  #---limits for non detection in ps1
+		  set Da$j[$i] = (De$j[$i]<0.)?0.:Da$j[$i]
+		  echo $(Da$j[$i])
+	   }
+	   #---Translate errors to flux
+	   #foreach j {z_ps z_dec Y J H K W1 W2} 
+	   foreach j {i_ps I_NTT z_ps z_dec y_ps Y J H K W1 W2} { 	  
+		  #---now I calculate the error with Flux/SN
+		  #---limits for non detection in ukidss
+		  set Dae$j[$i]   = (De$j[$i]>99.)?9:(Da$j[$i]/Ds$j[$i])
+		  #---limits for non detection in ps1
+		  set Dae$j[$i]   = (De$j[$i]<0.)?Datmp$j[$i]:Dae$j[$i]
+		  #---for wise
+		  set Dae$j[$i]   = (Dae$j[$i]==0.)?9:Dae$j[$i] 
+		  echo ----errors in flux---
+                  echo $(Dae$j[$i])
+	   }
+	   
+	   #---concatenate vectors---			
+	   foreach t {i_ps I_NTT z_ps z_dec y_ps Y J H K W1 W2} {
+	   #foreach t {z_ps z_dec Y J H K W1 W2} 
+
+		  set inmag           = inmag   concat  Do$t[$i]
+		  set inmag_tmp       = inmag_tmp   concat  Dotmp$t[$i]
+		  set indata_tmp      = indata_tmp  concat  Da$t[$i]
+		  set indata_tmp2     = indata_tmp2  concat  Datmp$t[$i]
+		  set inmage          = inmage  concat  De$t[$i]
+		  set inerror_tmp     = inerror_tmp concat  Dae$t[$i]
+		  set condlim         = condlim concat  cl$t[$i]
+		  set condlimps1      = condlimps1 concat  clps1$t[$i]
+                  set condlimdec      = condlimdec concat  cldec$t[$i]
+		  set insnr           = insnr concat Ds$t[$i]
+
+ 	   }
+	   
+	   print {lty inmag inmag_tmp}
+	   
+	   set inerror = inerror_tmp*1e17
+	   set indata = indata_tmp*1e17
+	   
+	   set DoK_ab[$i] = DoK[$i]
+
+	   print {indata inerror}
+	   set "$!1"_data = Do$1[$i]
+
+	   #---sed for BDs
+	   sed_BDs_allB $1
+	   	   
+	   #---sed for QSO templates   
+       	   sed_QSOs_allB $1
+	  
+	   #---calculate Chi2ridotto 
+	   chi2_redB
+	   	 
+	   set idDi    = name[$i]
+	   #set idDi_t1 = substr(idDi,0.,12.)
+	   #set idDi_t2 = substr(idDi,13.,$(dimen(idDi)-1))
+	   #set idDi_t  = idDi_t1 + idDi_t2 
+	   #set redi    = redshift[$i] 
+	 #  set Typei   = Type[$i]
+
+	  
+	   #---plot everything in once
+         # device x11
+
+	   if ($5==1) {
+             device postlandfile "$!2/$!6/pngs/"$(idDi)"PSa.ps"
+	     plotB $1
+	     !convert  -density 150 -geometry 100% -rotate 90 "$!2/$!6/pngs/"$(idDi)"PSa.ps" "$!2/$!6/pngs/"$(idDi)"PSa.png"
+	   }
+	   if ($5==2) {
+	     device x11
+	     plotB $1
+	   }  
+
+	  #  device x11
+	 #   !convert  -density 150 -geometry 100% -rotate 90 "output_ydrops/decals_May2016_test1/SED_pngs/"$(idDi)"PSa.ps" "output_ydrops/decals_May2016_test1/SED_pngs/"$(idDi)"PSa.png"
+
+	   
+	   #---plot Probability
+         #  device postfile "output_knownbd/png_Prob/"$(idDi)"PPQ.ps"
+	 #  plot_QSOType2B		   
+	 #  device x11
+	#   !convert  -density 150 -geometry 100% "output_knownbd/png_Prob/"$(idDi)"PPQ.ps" "output_knownbd/png_Prob/"$(idDi)"PPQ.png"
+	  
+	    define print_noheader 1	  
+          print +"$!2/sumSED_$!3.txt" {idDi best_z_QSO best_Tchi_QSO_r best_TTempallQSO best_type_BD best_Tchi_BD_r F_r}
+
+	    }
+	   
+
+
+########## Functions #########
+
+
+	
+gp_model 2
+	# adapted from Meiksin 2006, MNRAS, 365, 807
+	# compute the IGM attenuation due to Gunn-Peterson effect
+	# $1=wavelength vector, in [Ang]
+	# $2=redshift of the source
+	
+	# absorption due to the Lyman series:
+	set _n=2,31
+	define Ryd 911.26718  # Ang
+	set l0=$Ryd/(1.-1./(_n**2))
+	
+	do _i=2,31{
+	   set z$_i=$1/$(l0[$_i-2])-1.
+	   set cond_z$_i=(z$_i<$2)?1.:0.
+	}
+	
+	set tau_2=(z2<4.)?cond_z2*0.00211*(1.+z2)**3.7:cond_z2*0.00058*(1.+z2)**4.5
+	set tau_3=(z3<3.)?cond_z3*tau_2*0.348*(0.25*(1.+z3))**(1./3.):cond_z3*tau_2*0.348*(0.25*(1.+z3))**(1./6.)
+	set tau_4=(z4<3.)?cond_z4*tau_2*0.179*(0.25*(1.+z4))**(1./3.):cond_z4*tau_2*0.179*(0.25*(1.+z4))**(1./6.)
+	set tau_5=(z5<3.)?cond_z5*tau_2*0.109*(0.25*(1.+z5))**(1./3.):cond_z5*tau_2*0.109*(0.25*(1.+z5))**(1./6.)
+	set tau_6=cond_z6*tau_2*0.0722*(0.25*(1.+z6))**(1./3.)
+	set tau_7=cond_z7*tau_2*0.0508*(0.25*(1.+z7))**(1./3.)
+	set tau_8=cond_z8*tau_2*0.0373*(0.25*(1.+z8))**(1./3.)
+	set tau_9=cond_z9*tau_2*0.0283*(0.25*(1.+z9))**(1./3.)
+	
+	do _i=10,31{
+	   set tau_$_i=cond_z$_i*tau_9*720./($_i*($_i*$_i-1))
+	}
+	set dimen(tau_ly)=dimen($1)
+	
+	do _i=2,31{
+	   set tau_ly=tau_ly+tau_$_i
+	}
+	
+	# photoelectic absorption, contribution of optically thin 
+	# systems at the Lyman edge:
+	set _zL=$1/$Ryd-1.
+	
+	set tau_igm=(_zL<$2)?0.805*(1.+_zL)**3*(1./(1.+_zL)-1./(1.+$2)):0.
+	
+	# photoelectic absorption, contribution of Lyman Limit Systems:
+	define _No     0.25
+	define _beta   1.5 
+	define _gamma  1.5 
+	set _t0=($_beta-1.)/(1.-$_beta)
+	set _tA=_t0
+	do _n=1,10{
+	   set _t$_n=($_beta-1.)/($_n+1.-$_beta)*((-1)**$_n)/fact($_n)
+	   set _tA=_tA+_t$_n
+	}
+	
+	set _ta1=($_beta-1.)/(3.-$_gamma-1.)/(2-$_beta)*(-1)
+	set _tb1=(1.+$2)**($_gamma+1-3)*($1/$Ryd)**3-($1/$Ryd)**($_gamma+1)
+	set _tc1=_ta1*_tb1
+	set _tC=_tc1
+	do _n=2,10{
+	   set _ta$_n=($_beta-1.)/(3.*$_n-$_gamma-1.)/($_n+1-$_beta)*((-1)**$_n/fact($_n))
+	   set _tb$_n=(1.+$2)**($_gamma+1-3*$_n)*($1/$Ryd)**(3*$_n)-($1/$Ryd)**($_gamma+1)
+	   set _tc$_n=_ta$_n*_tb$_n
+	   set _tC=_tC+_tc$_n
+	}
+	
+	# _GG is the incomplete gamma function computed for (2-$_beta,1)
+	# but for simplicity we use only the simplified form valid ONLY
+	# if $_beta=1.5
+	set _GG=sqrt(pi)*erfc(1.) 
+	
+	
+	set tau_llsA=$_No/(4.+$_gamma-3.*$_beta)
+	set tau_llsB=(_GG-exp(-1)-_tA)
+	set tau_llsC=((1.+$2)**(-3*($_beta-1)+$_gamma+1)*($1/$Ryd)**(3*($_beta-1))-($1/$Ryd)**($_gamma+1.))
+	set tau_llsD=$_No*_tC
+	
+	set tau_lls=(_zL<$2)?tau_llsA*tau_llsB*tau_llsC-tau_llsD:0.
+	
+	# Total absorption:
+	set tau_tot=tau_ly+tau_igm+tau_lls
+	#define beta 1.5	
+	#set tau_totB = tau_tot*$beta
+	set $0=exp(-tau_tot)
+
+	
+pform    12    # write variable $1 with $2 decimal digits uninf SPRINTF
+        if($?2) {define _form $2} ELSE {define _form "%5.2f"}
+        define $1 (sprintf('$_form',$$1) )
+        define _int (INT($$1))
+
+

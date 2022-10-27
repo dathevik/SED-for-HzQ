@@ -1,0 +1,113 @@
+#----CODE FOR HZ-QSO SED FITTING------
+#--Originally created by CM---30.03.2015
+
+This is a README with description of the codes and of the library used
+
+#-------------------------------------------------------------------
+STRUCTURE OF THE CODE
+#-------------------------------------------------------------------
+> First general script: plotsedB_all_n.sm
+> Libraries of scripts which are called by the main code:
+#       sm_macro/rmac_v7.sm
+#       sm_macro/readimages.sm
+#       sm_macro/plotsedB_defvec.sm
+#       sm_macro/plotsedB_read.sm
+#       sm_macro/plotsedB_BDsedfit.sm
+#       sm_macro/plotsedB_QSOsedfit.sm
+#       sm_macro/plotsedB_chi2Red.sm
+#       sm_macro/plotsedB_plotall.sm
+
+#-------------------------------------------------------------------
+WHAT DOES THE CODE DO?
+#-------------------------------------------------------------------
+#-----------
+BRIEFLY:
+This is an SED fitting code that take in input a list of objects with several photometric information (magnitudes, mag errors).
+We want to asses if they are high-z quasars. 
+The code compares the photometric information of the input list to templates of quasars and contaminants (e.g. Brown Dwarfs).
+It finds the best QSO template and the best BDs template by computing and finding the minimum Chi2. 
+It plots the final results.
+#-----------
+IN DETAILS:
+ 1) Define the filters used in the code
+    > code file: sm_macro/plotsedB_defvec.sm
+    > function in the code: define_bandsB
+ 2) Read the input list of object, and the files with spectra of templates
+    > code file: sm_macro/plotsedB_read.sm
+    > functions in the code: read_allB 
+                            read_temp : read quasars templates
+                            read_BDs  : read spectra of brown dwarfs templates
+                            read_data_fits : read input file (it is in ASCII, despite of the name!) with magnitudes of objects
+ 3) 3.1) Convert the magnitudes in fluxes 
+    3.2) Compute magnitudes of the brown dwarfs templates
+    3.3) Shift the quasars templates in redshift and compute the magnitudes
+    3.4) Compute the Chi2
+    3.5) Produce the plot.
+    > code file: plotsedB_all_n.sm
+    > function in the code: temp_qso_redB
+                            sed_BDs_allB   : (in code: sm_macro/plotsedB_BDsedfit.sm)
+                                            normalize the BDs templates to a magnitude that the user input
+                                            compute fluxes from the BDs templates
+                            sed_QSOs_allB  : (in code: sm_macro/plotsedB_QSOsedfit.sm) 
+                                            normalize the QSOs templates to a magnitude that the user input
+                                            compute fluxes from the QSOs templates                                 
+                            chi2_redB      : (in code: sm_macro/plotsedB_chi2Red.sm )
+                                            compute reduced Chi square, and find the minimum chi2 for QSO and BD template          
+                            plotB          : (in code: sm_macro/plotsedB_plotall.sm)                          
+                                            plot of the results. In the plot there is : 
+                                            central panel: observed fluxes of the input source (red points)
+                                                           best quasar template (black) + derived fluxes (grey empty circles)
+                                                           best brown dwarf template (blue) + derived fluxes (blue emplty circles)
+                                            right upper panel: Chi2 distribution as a function of BD templates
+                                                               best template (minimum Chi2) in (red line)
+                                            right lower panel: Chi2 distribution as a function of QSO templates
+                                                               best template (minimum Chi2) in (red line)
+                                            lower panels: Filter used and residuals per filter                    
+                                           
+
+#----------------------------------------------
+LIBRARY OF TEMPLATES
+#----------------------------------------------
+#--------------------------------
+#--BROWN DWARF---23 templates
+	-Downloaded from http://pono.ucsd.edu/~adam/browndwarfs/spexprism/
+		Reference stars
+		Spectra from 0.6-2.55 micron
+	-MDwarf (M4 M5 M6 M7 M8 M9)--6 spectra 
+	-LDwarf (L0 L1 L2 L3 L5 L6 L7 L8)---8 spectra
+ 	-TDwarf (T0 T1 T2 T3 T4 T5 T6 T7 T8)--9 spectra
+	
+	-Found in folders: BDspectra/LDwarf ; BDspectra/TDwarf  ;  BDspectra/MDwarf
+	
+	-Magnitude WISE : rescaled through colors from table 1, Skrzypek et al 2015 (https://ui.adsabs.harvard.edu/abs/2015A%26A...574A..78S/abstract)
+#--------------------------------
+#---QSO TRACKS---6 templates
+	-Vanden Berk+2001 -- VD (https://ui.adsabs.harvard.edu/abs/2001AJ....122..549V/abstract)
+	-Roberto Decarli phd thesis -- RD
+	-Selsing+2015 -- SE (https://ui.adsabs.harvard.edu/abs/2016A%26A...585A..87S/abstract)
+	-PS1 quasars from Banados+2016 (https://ui.adsabs.harvard.edu/abs/2016ApJS..227...11B/abstract)
+	   -- All objects -- PS1a 
+	   -- Low EW Lya  -- PS1l
+	   -- High EW Lya -- PS1h 
+		-IGM absorption (GP effect)
+			-From recipe of Meiksin+2006 (https://ui.adsabs.harvard.edu/abs/2006MNRAS.365..807M/abstract)
+			-Exctintion law : exp(-beta*tau) 
+	
+	-Found in folders: temp_qso/
+	   -- VD: sdss_n.spc
+	   -- RD: qso_template_phd_thesis.spc
+	   -- SE: Selsing2015.dat
+	   -- PS1a: ps1sample_composite_feb2016_lya_extrapolated_GP.spc
+	   -- PS1l: ps1sample_composite_feb2016_low_lya_extrapolated_GP.spc
+	   -- PS1h: ps1sample_composite_feb2016_high_lya_extrapolated_GP.spc
+	
+-------------------------------------------------------------------
+#---Calculate the ChiQuadro
+	-Take data in input with the photometry and calculate the chiquadro
+	-chi : sum ((m_data,i - m_temp,i)**2)/(sigma_data,i**2)
+
+#---Limit:
+        -when a magnitude is a limit: error of the magnitude is = -1.
+
+
+	

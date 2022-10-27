@@ -1,0 +1,746 @@
+# Macro which do the plots in input for plotsed_all.sm
+# It is the sixth macro to call
+#
+# plotB 1 : plot all the plots togheter
+#
+# plot_sedB
+#
+# plot_sed_label2
+#
+# plot_chi_QSO
+#
+# plot_chi_BDs
+#
+# plot_QSOType
+
+plotB 1
+	
+	#---plot sed fitting, QSO and BDs Chisquare
+	erase
+	expand 1.10001
+	define TeX_strings 1	
+	location 3800 22000 11000 32500
+	notation -10 10 -10 10 
+	lweight 3
+	ctype 0
+	xlabel Wavelength
+	ylabel Flux 10^{-17} [erg/cm^{2}/A/s]
+	
+	#---plotsed
+	plot_sedB $1
+	plot_sed_label_2
+	
+	#---plot the chi square of BD
+	expand 1.10001
+	location 23500 30000 23000 32500
+	lweight 3
+	xlabel T_{BD}
+	
+	#--plotchiBD
+	plot_chisq_BDs
+	box 1 3 3 2
+	
+	#--plot the chi square of QSOs
+	lweight 3
+	expand 1.10001
+	location 23500 30000 11000 20000
+	xlabel z
+	
+	#--plotchiQSO
+	plot_chisq_QSO
+	box 1 3 3 2
+	
+	#--plot the residual
+	plot_chisq_res
+
+
+plot_QSOType2B
+
+	#data "output_knownqsos/Plot_prob_test_"$(idDi_t)".txt"
+	#read {Pmed0 1 zvec 2 tt 3}
+	
+	set Pmed0 = TchiTSQSOall_r											          
+	set zvec  = z_vec_all
+	set tt    = TTempallQSO
+	
+	set Pmed = 1/(2*3.1415)*exp(-Pmed0/2)
+	
+	#set Pmed = TchiTallSQSO
+	#set zvec = z_vec_all
+	#set tt   = TTempallQSO
+	
+	set dimen(zfrq)=36
+	set dimen(tfrq)=4
+	set zbin=5.5,9.0,0.1
+	set tbin=1,4
+	
+	do i=0,dimen(zfrq)-1{
+	   set Pz=Pmed if(zvec>$(zvec[$i]-0.05)&zvec<=$(zvec[$i]+0.05))
+	   set zfrq[$i]=sum(Pz)
+	}
+	do i=0,dimen(tfrq)-1{
+	   set Pt=Pmed if(tt==$i+1)
+	   set tfrq[$i]=sum(Pt)
+	}
+
+			
+	setimage Pmed $(dimen(tfrq)) $(dimen(zfrq))
+	#vreflect Pmed $(dimen(tfrq)) $(dimen(zfrq))
+	define test ($nlines-1)
+	limits 0 $ncols 0 $test
+	#limits 0 $ncols 0 $nlines
+
+
+	erase
+	expand 1.75
+	lweight 3
+	define TeX_strings 1.s
+	#minimaxi Pmed minP maxP
+	set scratch = Pmed
+	sort {scratch} 
+	define minP ( scratch[0] )
+	define maxP ( scratch[(dimen(scratch)-1)] )
+	set lev=$minP,$maxP,$(($maxP-$minP)/24.)
+	set col1={black darkviolet violet plum purple midnightblue navyblue blue cornflowerblue dodgerblue cyan forestgreen green} #13
+	set col2={seagreen palegreen olivedrab yellow orange darkorange red indianred firebrick brown chocolate} #24
+	set col=col1 concat col2
+	
+	location 8500 31000 7500 31000
+	do i=0,23{
+	  set llcoun=$(lev[$i])
+	  levels llcoun
+	  ctype $(col[$i])
+	  contour 
+	}
+	ctype 0
+	limits 5.5 9 1 4
+	box 0 0 0 0
+
+	location 4500 8500 7500 31000
+	#minimaxi tfrq mint maxt
+	set scratch2 = tfrq
+	sort {scratch2} 
+	define mint ( scratch2[0] )
+	define maxt ( scratch2[(dimen(scratch2)-1)] )
+	limits $maxt 0 1 4
+	#histogram tfrq tbin
+	vhistogram_e tbin tfrq 
+	
+	box 0 0 0 0
+	expand 1.2000
+	relocate $(1.1*$maxt) 1
+	putlabel 4 PS1high
+	relocate $(1.1*$maxt) 2
+	putlabel 4 Sel
+	relocate $(1.1*$maxt) 3
+	putlabel 4 PS1all
+	relocate $(1.1*$maxt) 4
+	putlabel 4 PS1low
+	
+	location 8500 31000 3500 7500
+	limits 5.5 9.0 zfrq
+	histogram zbin zfrq
+	
+	box 1 0 0 0
+
+	location 3500 31000 3500 31000
+	expand 1.75
+	ctype 0
+	ltype 0
+	xlabel z_{phot}
+	ylabel Template QSO
+
+
+	
+
+##############################################
+
+plot_sedB 1
+
+	#---add_colors
+	add_ctype darkgrey  100 100 100
+	add_ctype lightgrey 200 200 200
+	add_ctype grey 170 170 170
+	
+	set dltmp = dl/2.
+	
+	#---qso template
+	lweight 3
+	ctype 0
+
+	#---if best template is PS1 high lya
+	set xplot1 = xPS1h   if(cond_PS1h)
+	set yplot1 = yPS1h   if(cond_PS1h)
+	#---if best template is selsing	
+	set xplot2 = x0      if(cond_SE)
+	set yplot2 = y0      if(cond_SE)
+	#---if best template is PS1 all
+	set xplot3 = xPS1a   if(cond_PS1a)
+	set yplot3 = yPS1a   if(cond_PS1a)
+	#---if best template is PS1 low lya
+	set xplot4 = xPS1l   if(cond_PS1l)
+	set yplot4 = yPS1l   if(cond_PS1l)
+	
+	#---TEMPORARY ONLY
+	#set x=xPS1a*(1.+$(best_z_QSO))
+	#set yGP=gp_model(xtmpp,$(best_z_QSO))
+	#set y=yPS1a*yGP
+	#magnitude2 J_ab
+	#set yQSO_tmp = $m1
+	#set J_data = DoJ[$i]
+	#set ytmpp=(y*10.**(0.4*($m1-J_data)))*1e17	
+	#set xtmpp=x
+	
+	
+	set x=xplot$(best_TTempallQSO)*(1.+$(best_z_QSO))
+	set yGP=gp_model(x,$(best_z_QSO))
+	set y=yplot$(best_TTempallQSO)*yGP
+	magnitude2 $1
+	set yQSO_tmp = $m1
+	set $1_data = Do$1[$i]
+	set y=(y*10.**(0.4*($m1-$1_data)))*1e17	
+
+	ctype 0
+	limits 6000 50000 y
+	#limits x y
+	box
+	echo ---------break-----------
+
+	#---BDs template best
+	lweight 2
+	ctype blue
+	#connect waL0 FaL0
+	set Fa_tmp = Fa$(best_type_BD)*1e17
+	connect wa$(best_type_BD) Fa_tmp
+	#ctype forestgreen
+	#connect waT0 FaT0
+
+	#---BDs template best second
+	lweight 1
+	ltype 2
+	ctype turquoise
+	set Fa_tmp2 = Fa$(best2_type_BD)*1e17
+	connect wa$(best2_type_BD) Fa_tmp2
+	ltype 0
+
+
+
+	#---plot QSOs
+	ctype 0
+	lweight 4
+	connect x y
+	
+	#---TEMPORARY
+	#ctype lavender
+	#connect xtmpp ytmpp
+
+	#--point from photom BDs
+	ctype navyblue
+	ptype 10 0
+	points ll best_phot_BDs	
+
+	#--point from photom BDs --2nd best
+	ctype darkturquoise
+	ptype 10 0
+	points ll best2_phot_BDs	
+
+	#--point from photom QSOs
+	ctype 0
+	ptype 10 0
+	lweight 4
+	expand 1.7000  #---QUI HO CAMBIATO
+	ctype lightgrey
+	points ll best_phot_QSOs	
+	ctype 0
+
+		
+	#--point from data
+	#--non limit 
+	set indatap  = indata    if(!condlim&!condlimps1&!condlimdec)
+	set inerrorp = inerror   if(!condlim&!condlimps1&!condlimdec)
+	set llp      = ll        if(!condlim&!condlimps1&!condlimdec)
+	set dlp      = dltmp     if(!condlim&!condlimps1&!condlimdec)
+	set ltyp     = lty       if(!condlim&!condlimps1&!condlimdec)  
+	#--limit
+	set indatal  = indata    if(condlim&!condlimps1&!condlimdec)
+	set lll      = ll        if(condlim&!condlimps1&!condlimdec)
+	set dll      = dltmp     if(condlim&!condlimps1&!condlimdec)
+	#---set limit ps1
+	set indatalps1     = inerror  if(condlimps1)
+	set indatalps1_res = indata   if(condlimps1) 
+	set lllps1   = ll             if(condlimps1) 
+	set dllps1   = dltmp          if(condlimps1)
+	set ltylps1  = lty            if(condlimps1) 
+        #---set limit decals
+        set indataldec     = inerror  if(condlimdec)
+        set indataldec_res = indata   if(condlimdec)
+        set llldec   = ll             if(condlimdec)
+        set dlldec   = dltmp          if(condlimdec)
+        set ltyldec  = lty            if(condlimdec)
+	
+	#---point from qso and BDs
+	set best_phot_QSOspp =  best_phot_QSOs  if(!condlim&!condlimps1&!condlimdec)
+	set best_phot_BDspp  =  best_phot_BDs   if(!condlim&!condlimps1&!condlimdec)	
+	set best2_phot_BDspp =  best2_phot_BDs  if(!condlim&!condlimps1&!condlimdec)
+	set best_phot_QSOspps1 =  best_phot_QSOs  if(condlimps1)
+	set best_phot_BDspps1  =  best_phot_BDs   if(condlimps1)	
+	set best2_phot_BDspps1 =  best2_phot_BDs  if(condlimps1)
+        set best_phot_QSOspdec =  best_phot_QSOs  if(condlimdec)
+        set best_phot_BDspdec  =  best_phot_BDs   if(condlimdec)
+        set best2_phot_BDspdec =  best2_phot_BDs  if(condlimdec)
+
+	set best_phot_QSOsp = 	best_phot_QSOspp concat best_phot_QSOspps1 concat best_phot_QSOspdec 	
+	set best_phot_BDsp = 	best_phot_BDspp  concat best_phot_BDspps1 concat best_phot_BDspdec
+	set best2_phot_BDsp = 	best2_phot_BDspp concat best2_phot_BDspps1 	concat best2_phot_BDspdec
+	
+	#--non det in ps1
+	ctype red
+	ptype 3 3
+	lweight 4
+	expand 2.000
+	angle 180
+	errorbar lllps1 indatalps1 dllps1 1
+	errorbar lllps1 indatalps1 dllps1 3
+	points lllps1 indatalps1
+	angle 0
+	
+        #--non det in decals z
+        ctype red
+        ptype 3 3
+        lweight 4
+        expand 2.000
+        angle 180
+        errorbar llldec indataldec dlldec 1
+        errorbar llldec indataldec dlldec 3
+        points llldec indataldec
+        angle 0
+
+	#---det---error
+	ctype indianred
+	errorbar llp indatap inerrorp 2
+	errorbar llp indatap inerrorp 4
+	errorbar llp indatap dlp 1
+	errorbar llp indatap dlp 3
+	#---det---points	
+	ctype red
+	ptype 10 3
+	points llp indatap
+
+
+	ctype 0
+	expand 1.5001
+	vecminmax y ymin ymax
+	set  y_tmp1 = $ymax/1.05
+	set  y_tmp2 = $ymax/1.15
+	set  y_tmp3 = $ymax/1.2
+	set  y_tmp4 = $ymax/1.25
+	set  y_tmp5 = $ymax/1.0
+	set  y_tmp6 = $ymax/1.3
+	set  y_tmp7 = $ymax/1.35
+
+
+	set best_Tchi_BD_tmp = sprintf('%5.2f', $(best_Tchi_BD))
+	set best2_Tchi_BD_tmp = sprintf('%5.2f', $(best2_Tchi_BD))
+	set best_Tchi_QSO_tmp = sprintf('%5.2f', $(best_Tchi_QSO))
+	set best_z_QSO_tmp = sprintf('%5.2f', $(best_z_QSO))
+	set best_TTemp_QSO_tmp = sprintf('%5.2f', $(best_TTempallQSO))
+	#set best_z_QSO_tmp = best_z_QSO
+	#set best_TTemp_QSO_tmp =best_TTempallQSO
+	set best_Tchi_BD_tmp_r = sprintf('%5.2f', $(best_Tchi_BD_r))
+	set best2_Tchi_BD_tmp_r = sprintf('%5.2f', $(best2_Tchi_BD_r))
+	set best_Tchi_QSO_tmp_r = sprintf('%5.2f', $(best_Tchi_QSO_r))
+	set F_r_tmp = sprintf('%5.2f', $(F_r))
+
+
+plot_sed_label_1
+	
+	#---put label on the plot--single plot
+	#---name QSO
+	ctype red
+	relocate 40000 $(y_tmp1[0])
+	putlabel 5 $(idDi)
+	
+	#---BDs info
+	expand 1.20001
+	ctype 0
+	relocate 35000 $(y_tmp2[0])
+	putlabel 5 "Best BD T:" $(best_type_BD)   "Chi2:" $(best_Tchi_BD_tmp)  "Chi2R: " $(best_Tchi_BD_tmp_r)
+	#---BDs info 2nd best
+	expand 1.20001
+	ctype 0
+	relocate 35000 $(y_tmp2[0])
+	putlabel 5 "Best BD2 T:" $(best2_type_BD)   "Chi2:" $(best2_Tchi_BD_tmp)  "Chi2R: " $(best2_Tchi_BD_tmp_r)
+
+	#---QSOs info
+	relocate 35000 $(y_tmp4[0])
+	putlabel 5 "Best QSO z:" $(best_z_QSO_tmp)   "Chi2:" $(best_Tchi_QSO_tmp)   "Chi2R: " $(best_Tchi_QSO_tmp_r)
+	
+	#--Bands used
+	relocate 35000 $(y_tmp5[0])
+	#putlabel 5 "Bands used :" 
+
+	#---Fraction of chisquared
+	relocate 35000 $(y_tmp6[0])
+	putlabel 5 "ChiR_{QSO}/ChiR_{BD} :" $(F_r_tmp)
+	
+	expand 1.50001		
+	lweight 0	
+	ctype 0 
+
+
+
+plot_sed_label_2
+
+	#---put label on the plot--multiple plot
+	#---name QSO
+	ctype red
+	relocate 32000 $(y_tmp5[0])
+	putlabel 5 $(idDi)
+	
+	#---BDs info
+	expand 1.00001
+	ctype 0
+	relocate 32000 $(y_tmp2[0])
+	putlabel 5 "Best BD T:"$(best_type_BD) "Chi2R:"$(best_Tchi_BD_tmp_r)
+
+	#---QSOs info
+	relocate 32000 $(y_tmp4[0])
+	putlabel 5 "Best QSO z:"$(best_z_QSO_tmp) "Chi2R:"$(best_Tchi_QSO_tmp_r)  "Type:"$(best_TTemp_QSO_tmp)
+	
+	#---Fraction of chisquared
+	relocate 32000 $(y_tmp7[0])
+	putlabel 5 "ChiR_{QSO}/ChiR_{BD}:" $(F_r_tmp)
+	
+	expand 1.50001		
+	lweight 0	
+	ctype 0 
+
+	   
+plot_chisq_QSO
+
+	#--plot the chisquare for the best fit for QSOs
+	
+	ctype 0
+	vecminmax TchiTSQSO_r yQSetmp_min yQSetmp_max
+	vecminmax TchiTPS1aSQSO_r yQPS1atmp_min yQPS1atmp_max
+	vecminmax TchiTPS1lSQSO_r yQPS1ltmp_min yQPS1ltmp_max
+	vecminmax TchiTPS1hSQSO_r yQPS1htmp_min yQPS1htmp_max
+	#---lim max
+	set lim_max_vec = $yQSetmp_max concat $yQPS1atmp_max concat $yQPS1ltmp_max concat $yQPS1htmp_max 
+	set sorter1 = lim_max_vec
+	sort {sorter1}
+	set lim_max = sorter1[$(dimen(sorter1))-1]
+	#---lim min
+	set lim_min_vec = $yQSetmp_min concat $yQPS1atmp_min concat $yQPS1ltmp_min concat $yQPS1htmp_min 
+	set sorter2 = lim_min_vec
+	sort {sorter2}
+	set lim_min = sorter2[0]
+
+	limits z_vec $(lim_min[0]) $(lim_max[0])
+	ptype 10 3
+	#---Chi2 of the SELSING template
+	connect z_vec TchiTSQSO_r
+	#---Chi2 of the PS1 all template
+	ctype blue
+	connect z_vec TchiTPS1aSQSO_r
+	#---Chi2 of the PS1 low lya template
+	ctype cyan
+	connect z_vec TchiTPS1lSQSO_r
+	#---Chi2 of the PS1 high lya template
+	ctype green
+	connect z_vec TchiTPS1hSQSO_r
+
+	#---Best Chi square draw line
+	ctype red
+	ltype 2
+	relocate $(best_z_QSO) -1.0
+	draw $(best_z_QSO) $(lim_max[0])
+	
+	#---label
+	set ylabtmp1 = lim_max/1.1
+	set ylabtmp2 = lim_max/1.2
+	set ylabtmp3 = lim_max/1.3
+	set ylabtmp4 = lim_max/1.4
+	expand 0.90001
+	ctype 0
+	relocate 8. $(ylabtmp1[0])
+	putlabel 5 S	
+	ctype blue
+	relocate 8. $(ylabtmp2[0])
+	putlabel 5 PS1a
+	ctype cyan
+	relocate 8. $(ylabtmp3[0])
+	putlabel 5 PS1l
+	ctype green
+	relocate 8. $(ylabtmp4[0])
+	putlabel 5 PS1h
+	
+	
+	ctype 0
+	ltype 0
+
+
+
+plot_chisq_BDs
+
+	#--plot the chisquare for the best fit for QSOs
+	
+	set x_tmp = 0, $(dimen(typeSD))-1, 1.
+	ctype 0
+	vecminmax TchiSDS_r ytmp_min ytmp_max
+	limits x_tmp $ytmp_min $ytmp_max
+	ptype 10 3
+	connect x_tmp TchiSDS_r
+	ctype red
+	ltype 2
+	relocate $(best_typeSD_len) 0.0
+	draw $(best_typeSD_len) $ytmp_max
+	relocate $(best2_typeSD_len) 0.0
+	draw $(best2_typeSD_len) $ytmp_max
+	
+	ctype 0
+	ltype 0
+
+
+plot_chisq_res
+
+	#---plot the residuals of the Chi square fit
+	#---I split the plot in three parts oherwise you can't see anything
+	set indatap_all  = indatap concat indatalps1_res concat indataldec_res
+	set inerrorp_all = inerrorp concat indatalps1 concat indataldec
+	set llp_all      = llp concat  lllps1 concat  llldec
+	set res_best_QSO = (indatap_all - best_phot_QSOsp)/inerrorp_all
+	set res_best_BD  = (indatap_all - best_phot_BDsp)/inerrorp_all #navyblue
+	set res_best2_BD = (indatap_all - best2_phot_BDsp)/inerrorp_all #darkturquoise
+	
+	vecminmax res_best_QSO res_best_QSOmin res_best_QSOmax 
+	vecminmax res_best_BD  res_best_BDmin  res_best_BDmax
+	vecminmax res_best2_BD res_best2_BDmin res_best2_BDmax
+	set res_min_tmp = $res_best_QSOmin concat $res_best_BDmin concat $res_best2_BDmin 
+	set res_max_tmp = $res_best_QSOmax concat $res_best_BDmax concat $res_best2_BDmax 
+	vecminmax res_min_tmp res_min_lim_tmp    res_min_limmax
+	vecminmax res_max_tmp res_max_limmin     res_max_lim_tmp
+	set res_min_lim = $res_min_lim_tmp - 1.
+	set res_max_lim = $res_max_lim_tmp + 1.
+	 		
+	#---first box
+	ctype 0
+	define TeX_strings 1
+	location 3500 12000 3500 8000
+	limits 7100 9900 $(res_min_lim[0]) $(res_max_lim[0])
+	#---quasar best template
+	ctype 0
+	expand 1.75001
+	lweight 3.0
+	ltype  0
+	ptype 10 0
+	points llp_all res_best_QSO
+	#---BDs best template
+	ctype blue
+	points llp_all res_best_BD
+	ctype darkturquoise
+	points llp_all res_best2_BD
+	#---
+	ctype red
+	lweight 3
+	ltype 2
+	relocate 1000 0.
+	draw 50000 0.
+	ctype 0
+	expand 0.90001
+	relocate 7545 $(1.2*$(res_min_lim[0])) 
+	putlabel 5 i_{ps}
+	relocate 7545 $(res_min_lim[0])
+	ltype 2
+	ctype lightgrey
+	draw 7545 $(res_max_lim[0]) 
+	ctype 0
+	relocate 8679 $(1.2*$(res_min_lim[0])) 
+	putlabel 5 z_{ps} 
+	relocate 8679 $(res_min_lim[0]) 
+	ltype 2
+	ctype lightgrey
+	draw 8679 $(res_max_lim[0]) 
+	ctype 0
+	relocate 9250 $(1.2*$(res_min_lim[0])) 
+	putlabel 5 z_{dec}
+	relocate 9250 $(res_min_lim[0]) 
+	ltype 2
+	ctype lightgrey
+	draw 9250 $(res_max_lim[0]) 
+	ctype 0	 
+	relocate 9633 $(1.2*$(res_min_lim[0])) 
+	putlabel 5 y_{ps} 
+	relocate 9633 $(res_min_lim[0]) 
+	ltype 2
+	ctype lightgrey
+	draw 9633 $(res_max_lim[0]) 
+	ctype 0	 
+	#set vlab1 = { i_ps I_NTT z_ps z_dec y_ps }	
+	expand 1.10001
+	box 0 2 0 0
+	
+	#---second box
+	location 13000 22000 3500 8000
+	limits 9000 23000 $(res_min_lim[0]) $(res_max_lim[0])
+	ctype 0
+	ptype 10 0
+	expand 1.750001
+	lweight 3
+	ltype 0
+	#---print only NIR---Y J H K
+	set cond_Y = (llp_all==10000)?1:0
+	set cond_J = (llp_all==12500)?1:0
+	set cond_H = (llp_all==16500)?1:0
+	set cond_K = (llp_all==21500)?1:0
+	set cond_NIRall = cond_Y | cond_J | cond_H | cond_K
+	set llp_nirtmp = llp_all   if(cond_NIRall)
+	set res_best_QSO_nirtmp = res_best_QSO   if(cond_NIRall)
+	set res_best_BD_nirtmp  = res_best_BD    if(cond_NIRall)
+	set res_best2_BD_nirtmp = res_best2_BD   if(cond_NIRall)
+	#----
+	points llp_nirtmp res_best_QSO_nirtmp
+	#---BDs best template
+	ctype blue
+	points llp_nirtmp res_best_BD_nirtmp
+	ctype darkturquoise
+	points llp_nirtmp res_best2_BD_nirtmp
+	#---
+	ctype red
+	lweight 3
+	ltype 2
+	relocate 1000 0.
+	draw 50000 0.
+	#---
+	ctype 0
+	expand 0.90001
+	relocate 10000 $(1.2*$(res_min_lim[0])) 
+	putlabel 5 Y
+	relocate 10000 $(res_min_lim[0])
+	ltype 2
+	ctype lightgrey
+	draw 10000 $(res_max_lim[0]) 
+	ctype 0
+	relocate 12500 $(1.2*$(res_min_lim[0])) 
+	putlabel 5 J
+	relocate 12500 $(res_min_lim[0])
+	ltype 2
+	ctype lightgrey
+	draw 12500 $(res_max_lim[0]) 
+	ctype 0
+	relocate 16500 $(1.2*$(res_min_lim[0])) 
+	putlabel 5 H
+	relocate 16500 $(res_min_lim[0])
+	ltype 2
+	ctype lightgrey
+	draw 16500 $(res_max_lim[0]) 
+	ctype 0
+	relocate 21500 $(1.2*$(res_min_lim[0])) 
+	putlabel 5 K
+	relocate 21500 $(res_min_lim[0])
+	ltype 2
+	ctype lightgrey
+	draw 21500 $(res_max_lim[0]) 
+	ctype 0
+	#---
+	expand 1.10001
+	box 0 0 0 0
+
+	#---third box
+	location 23000 31000 3500 8000
+	limits 30000 50000 $(res_min_lim[0]) $(res_max_lim[0]) 
+	ctype 0
+	ptype 10 0
+	expand 1.750001
+	lweight 3
+	ltype 0
+	points llp_all res_best_QSO
+	#---BDs best template
+	ctype blue
+	points llp_all res_best_BD
+	ctype darkturquoise
+	points llp_all res_best2_BD
+	#---
+	ctype red
+	lweight 3
+	ltype 2
+	relocate 1000 0.
+	draw 50000 0.
+	expand 0.90001
+	ctype 0
+	relocate 33526 $(1.2*$(res_min_lim[0])) 
+	putlabel 5 W1
+	relocate 33526 $(res_min_lim[0])
+	ltype 2
+	ctype lightgrey
+	draw 33526 $(res_max_lim[0]) 
+	ctype 0
+	relocate 46028 $(1.2*$(res_min_lim[0])) 
+	putlabel 5 W2
+	relocate 46028 $(res_min_lim[0])
+	ltype 2
+	ctype lightgrey
+	draw 46028 $(res_max_lim[0]) 
+	ctype 0
+	expand 1.10001
+	box 0 0 0 0		
+	ctype 0
+	ltype 0
+	expand 1.10001
+	lweight 3
+	location 3500 31000 3500 8000
+	xlabel Filters
+	ylabel Res
+	#axis 7000 50000 
+		
+
+ ########### Modules ##############
+ ##################################
+
+
+vhistogram_e 2  #Plot an histogram with the axis inverted
+        set _b = $1
+        set _n = $2       
+       
+        define _d2 (($(_b[1]) - $(_b[0]))/2.0)
+   
+        set _bmin = _b - $_d2
+        set _bmax = _b + $_d2
+   
+        do i=0, $(dimen(_bmin)-1){
+            relocate $(_n[$i]) $(_bmin[$i])
+            draw $(_n[$i]) $(_bmax[$i])   
+            }
+   
+        do i=0, $(dimen(_bmin)-2){
+            relocate $(_n[$i]) $(_bmax[$i])
+            draw $(_n[$($i+1)]) $(_bmin[$($i+1)])
+            }
+
+
+vshade_e 3      #Plot an histogram with the axis inverted
+        define _Nshad $1
+        set _b = $2
+        set _n = $3
+
+        define _d2 (($(_b[1]) - $(_b[0]))/2.0)
+   
+        set _bmin = _b - $_d2
+        set _bmax = _b + $_d2      
+       
+        do i=0, $(dimen(_bmin)-1){
+            set _bin_$i = $(_bmin[$i]), $(_bmax[$i]) , ($_d2/10.)
+            set _nn_$i = (_bin_$i - _bin_$i) + $(_n[$i])
+            if ($i==0){
+                set _bin_tot = _bin_$i
+                set _nn_tot = _nn_$i
+                }else{
+                set _bin_tot = _bin_tot concat _bin_$i
+                set _nn_tot = _nn_tot concat _nn_$i
+                }
+            }
+   
+        set _nn_tot = _nn_tot concat 0
+        set _bin_tot = _bin_tot concat 0
+   
+        shade $_Nshad _nn_tot _bin_tot 

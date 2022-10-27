@@ -1,0 +1,444 @@
+# Macro which reads the data in input for plotsed_all.sm
+# It is the second macro to read
+# 
+# read_allB :
+#
+# read_temp :
+#
+# read_BDs
+#
+# read_data_fits :
+#
+# cond_lim_data_ydrops : Module
+#
+# define_vec : Module
+
+read_allB 3
+ 
+	#---Read the templates
+	echo "-----Read Template--"
+	read_temp
+
+	#---Read BDs spectra
+	echo "-----Read BDs-------" 
+	read_BDs
+
+	#---Read Data
+	echo "---Read Data-----"
+
+	#---data all from FITSS file
+	read_data_fits	$1 $2 $3 
+
+	define_vec
+
+#-------------------------------
+
+read_temp
+
+	#--Vanden Berk Template
+	data "/disk1/mazzuchelli/plotsed/temp_qso/sdss_n.spc"
+	read {xVD 1 yVD 2}
+		
+	#--Decarli PhD Thesis Template
+	data "/disk1/mazzuchelli/plotsed/temp_qso/qso_template_phd_thesis.spc"
+        read {xDC 1 yDC 2}
+
+	#--Selsing2015
+	data "/disk1/mazzuchelli/plotsed/temp_qso/Selsing2015.dat"
+        read {xSE 1 ySE 2}
+	
+	#--PS1 Composite all
+	data "/disk1/mazzuchelli/plotsed/temp_qso/ps1sample_composite_feb2016_lya_extrapolated_GP.spc"
+	read {xPS1a 1 yPS1a 2}
+	#--PS1 Composite Lya low
+	data "/disk1/mazzuchelli/plotsed/temp_qso/ps1sample_composite_feb2016_low_lya_extrapolated_GP.spc"
+	read {xPS1l 1 yPS1l 2}
+	#--PS1 Composite Lya high
+	data "/disk1/mazzuchelli/plotsed/temp_qso/ps1sample_composite_feb2016_high_lya_extrapolated_GP.spc"
+	read {xPS1h 1 yPS1h 2}
+
+
+
+read_BDs
+
+	#---Mdwarf
+	#---M4V
+	data "/disk1/mazzuchelli/BDspectra/MDwarf/spex-prism_LP508-14_20030521_BUR04B.txt"
+	read {wM4 1 FM4 2 NM4 3}
+	#---M5V
+	data "/disk1/mazzuchelli/BDspectra/MDwarf/spex-prism_Gliese866AB_20040724_BUR08B.txt"
+	read {wM5 1 FM5 2 NM5 3}
+	#---M6V
+	data "/disk1/mazzuchelli/BDspectra/MDwarf/spex-prism_Wolf359_20040311_BUR08B.txt"
+	read {wM6 1 FM6 2 NM6 3}
+	#---M7V
+	data "/disk1/mazzuchelli/BDspectra/MDwarf/spex-prism_VB8_20040723_BUR08B.txt"
+	read {wM7 1 FM7 2 NM7 3}
+	#---M8V
+	data "/disk1/mazzuchelli/BDspectra/MDwarf/spex-prism_VB10_20030919_BUR04B.txt"
+	read {wM8 1 FM8 2 NM8 3}
+	#---M9V
+	data "/disk1/mazzuchelli/BDspectra/MDwarf/spex-prism_LHS2924_20040312_BUR06B.txt"
+	read {wM9 1 FM9 2 NM9 3}
+
+	#---Read LDwarfs Template
+	#--Wavelenght are in micron
+	data "/disk1/mazzuchelli/BDspectra/allSPEC/spex-prism_2MASPJ0345432+254023__BUR06B.txt"
+	read {xBDL0n 1 yBDL0o 2}
+
+	#---Ldwarf
+	#---L0V
+	data "/disk1/mazzuchelli/BDspectra/LDwarf/spex-prism_2MASPJ0345432+254023_20030905_BUR06B.txt"
+	read {wL0 1 FL0 2 NL0 3}
+	#---L1V
+	data "/disk1/mazzuchelli/BDspectra/LDwarf/spex-prism_2MASSWJ1439284+192915_20030523_BUR04B.txt"
+	read {wL1 1 FL1 2 NL1 3}
+	#---L2V
+	data "/disk1/mazzuchelli/BDspectra/LDwarf/spex-prism_Kelu-1_20060411_BUR07D.txt"
+	read {wL2 1 FL2 2 NL2 3}
+	#---L3V
+	data "/disk1/mazzuchelli/BDspectra/LDwarf/spex-prism_2MASSWJ1146345+223053_20080112_BUR10A.txt"
+	read {wL3 1 FL3 2 NL3 3}
+	#---L4
+	data "/disk1/mazzuchelli/BDspectra/LDwarf/L4.txt"
+	read {wL4 1 FL4 2 NL4 3}	
+	#---L5V
+	data "/disk1/mazzuchelli/BDspectra/LDwarf/spex-prism_DENIS-PJ1228.2-1547_20080114_BUR10A.txt"
+	read {wL5 1 FL5 2 NL5 3}
+	#---L6V
+	data "/disk1/mazzuchelli/BDspectra/LDwarf/spex-prism_2MASSsJ0850359+105716_20060408_BUR-NP.txt"
+	read {wL6 1 FL6 2 NL6 3}
+	#---L7V
+	data "/disk1/mazzuchelli/BDspectra/LDwarf/spex-prism_DENIS-PJ0205.4-1159__BUR10A.txt"
+	read {wL7 1 FL7 2 NL7 3}
+	#---L8V
+	data "/disk1/mazzuchelli/BDspectra/LDwarf/spex-prism_2MASSWJ1632291+190441_20030905_BUR07C.txt"
+	read {wL8 1 FL8 2 NL8 3}
+	#---L9
+	data "/disk1/mazzuchelli/BDspectra/LDwarf/L9.txt"
+	read {wL9 1 FL9 2 NL9 3}
+
+	#---Tdwarf
+	#---T0V
+	data "/disk1/mazzuchelli/BDspectra/TDwarf/spex-prism_SDSSJ120747.17+024424.8_20061221_LOO07A.txt"
+	read {wT0 1 FT0 2 NT0 3}
+	#---T1V
+	data "/disk1/mazzuchelli/BDspectra/TDwarf/spex-prism_SDSSJ015141.69+124429.6_20030919_BUR04B.txt"
+	read {wT1 1 FT1 2 NT1 3}
+	#---T2V
+	data "/disk1/mazzuchelli/BDspectra/TDwarf/spex-prism_SDSSpJ125453.90-012247.4_20030522_BUR04B.txt"
+	read {wT2 1 FT2 2 NT2 3}
+	#---T3V
+	data "/disk1/mazzuchelli/BDspectra/TDwarf/spex-prism_2MASSJ12095613-1004008_20030523_BUR04B.txt"
+	read {wT3 1 FT3 2 NT3 3}
+	#---T4V
+	data "/disk1/mazzuchelli/BDspectra/TDwarf/spex-prism_2MASSIJ2254188+312349_20030918_BUR04B.txt"
+	read {wT4 1 FT4 2 NT4 3}
+	#---T5V
+	data "/disk1/mazzuchelli/BDspectra/TDwarf/spex-prism_2MASSJ15031961+2525196_20030522_BUR04B.txt"
+	read {wT5 1 FT5 2 NT5 3}
+	#---T6V
+	data "/disk1/mazzuchelli/BDspectra/TDwarf/spex-prism_SDSSpJ162414.37+002915.6_20040312_BUR06D.txt"
+	read {wT6 1 FT6 2 NT6 3}
+	#---T7V
+	data "/disk1/mazzuchelli/BDspectra/TDwarf/spex-prism_2MASSIJ0727182+171001_20040310_BUR06D.txt"
+	read {wT7 1 FT7 2 NT7 3}
+	#---T8V
+	data "/disk1/mazzuchelli/BDspectra/TDwarf/spex-prism_2MASSIJ0415195-093506_20030917_BUR04B.txt"
+	read {wT8 1 FT8 2 NT8 3}
+	
+	
+	#---in A--
+
+	foreach j {M4 M5 M6 M7 M8 M9} {
+		set wa$j = w$j*10**(4)
+	}
+
+	foreach j {L0 L1 L2 L3 L4 L5 L6 L7 L8 L9} {
+		set wa$j = w$j*10**(4)
+	}
+	foreach j {T0 T1 T2 T3 T4 T5 T6 T7 T8} {
+		set wa$j = w$j*10**(4)
+	}
+	
+	#
+	
+
+read_data_fits 3
+
+	#--magnitude
+	#data "input/input_ydrops/data_test_ydrops_May2016_mag.dat"
+	#data "input/badwise/yl16/data_badwisel16_mag.dat"	
+	data "$!1/input_ascii/data_$!2_mag.dat"
+	read {DoW1 1 DoW2 2 name 3.s DoZ_uk 4 DoY 5 DoJ 6 DoH 7 DoK 8 idy 9}
+
+	#---error
+	#data "input/input_ydrops/data_test_ydrops_May2016_mage.dat"	
+	#data "input/badwise/yl16/data_badwisel16_mage.dat"
+	data "$!1/input_ascii/data_$!2_mage.dat"
+	read {snrW1 1 snrW2 2 name 3.s DeZ_uk 4 DeY 5 DeJ 6 DeH 7 DeK 8}
+	
+	#---ps1
+	#data "input/input_zdrops/allsky/rag130decl25/yg20p2l20p8/data_yg20p2l20p8_SEDfits_magps1.dat"
+	#data "input/badwise/yl16/data_badwisel16_magps1.dat"
+	
+	if($3==0){
+		data "$!1/input_ascii/data_$!2_magps1.dat"	
+		read {Doi_ps 2 Dei_ps 3 Doz_ps 4 Dez_ps 5 Doy_ps 6 Dey_ps 7}
+	}
+	if($3==1){
+		data "$!1/input_ascii/data_$!2_magps1phot.dat"	
+		read {Doi_ps 2 Dei_ps 3 Doz_ps 4 Dez_ps 5 Doy_ps 6 Dey_ps 7}
+	}
+
+
+        #---decals
+        #data "input/input_ydrops/data_test_ydrops_May2016_magdec.dat"
+	data "$!1/input_ascii/data_$!2_magdec.dat"	
+	read {Doz_dec 2 Dez_dec 3}
+	
+	#---set NTT waiting for moment when it will be automatized
+	#---TEMPORARY
+	read_set_decamNTT
+	
+	#---wise snr in error
+	set DeW1 = 2.5*lg(1+abs(1./(snrW1))) 
+	set DeW2 = 2.5*lg(1+abs(1./(snrW2)))
+	#set DoW1 = (snrW1<=0.)?0.:DoW10
+	#set DoW2 = (snrW2<=0.)?0.:DoW20
+	#set DeW1  = (DeW10>10)?999:DeW10
+	#set DeW2  = (DeW20>10)?999:DeW10
+	
+
+	set DsW1 = snrW1
+	set DsW2 = snrW2
+	
+	#---ps1 mag in snr
+	set Dsi_ps = (1./Dei_ps)*1.0857
+	set Dsz_ps = (1./Dez_ps)*1.0857
+	set Dsy_ps = (1./Dey_ps)*1.0857
+	#---ZNTT mag in snr
+	set Dsz_sdss = (1./Dez_sdss)*1.0857
+
+	#---ukidss in snr
+	set DsY = (1./DeY)*1.0857
+	set DsJ = (1./DeJ)*1.0857
+	set DsH = (1./DeH)*1.0857
+	set DsK = (1./DeK)*1.0857
+
+	#---zdecals in snr
+	set Dsz_dec = (1./Dez_dec)*1.0857
+
+	#---create vector of conditions for each point to see if it 
+	#---is detected for each band
+	cond_lim_data_yd
+	
+
+
+####################################################################
+#############################Modules################################
+####################################################################
+
+
+read_set_decamNTT
+
+	#---decam
+	set Dog_dec = (Doy_ps-Doy_ps) + 0.0
+	set Dor_dec = (Doy_ps-Doy_ps) + 0.0
+	#set Doz_dec = (Doy_ps-Doy_ps) + 0.0
+
+	#--I_NTT		
+	set DoI_NTT = (Doy_ps-Doy_ps) + 0.0
+	
+	#---decam
+	set Deg_dec = (Dey_ps-Dey_ps) + 999.
+	set Der_dec = (Dey_ps-Dey_ps) + 999.
+	#set Dez_dec = (Dey_ps-Dey_ps) + 999.
+
+	#--I_NTT		
+	set DeI_NTT = (Dey_ps-Dey_ps) + 999.
+
+	#--only to not make it crash
+	set Doz_sdss = Doz_ps
+	set Dez_sdss = Dez_ps
+	#---ZNTT mag in snr
+	set Dsz_sdss = (1./Dez_sdss)*1.0857
+	
+	#---DECam in snr
+	set Dsg_dec = (1./Deg_dec)*1.0857
+	set Dsr_dec = (1./Der_dec)*1.0857
+	#set Dsz_dec = (1./Dez_dec)*1.0857
+	
+	#--I_NTT in snr
+	set DsI_NTT = (1./DeI_NTT)*1.0857	
+
+	
+cond_lim_data_yd
+
+	#---conditions on limits
+	#---on ps1---non det err--1	
+	set dimen(cli_ps) = dimen(Doz_ps)	
+	set dimen(clz_ps) = dimen(Doz_ps)	
+	set dimen(cly_ps) = dimen(Doz_ps)
+	set dimen(cldeci_ps) = dimen(Doz_ps)
+        set dimen(cldecz_ps) = dimen(Doz_ps)
+        set dimen(cldecy_ps) = dimen(Doz_ps)	
+	set dimen(clps1i_ps) = dimen(Doz_ps)	
+	set dimen(clps1z_ps) = dimen(Doz_ps)	
+	set dimen(clps1y_ps) = dimen(Doz_ps)	
+	
+	
+	foreach j {i_ps z_ps y_ps} {
+	#foreach j {z_ps}
+		#--only for known qso
+		#set cl$j = (De$j < 0.)?1:0
+		set cl$j = (De$j > 99.)?1:0
+		set clps1$j = (De$j < 0.)?1:0
+		set cldec$j = Doz_ps-Doz_ps
+	}
+
+
+	#set dimen(clz_sdds) = dimen(Doz_ps)	
+	#foreach j {z_sdss}{
+	#	set cl$j = (De$j < 0.)?1:0
+	#	set clps1$j = Doz_ps-Doz_ps
+	#}
+	
+
+	#--on ukidss ---non det err=999
+	set dimen(clY) = dimen(Doz_ps)	
+	set dimen(clJ) = dimen(Doz_ps)	
+	set dimen(clH) = dimen(Doz_ps)	
+	set dimen(clK) = dimen(Doz_ps)	
+	set dimen(clps1Y) = dimen(Doz_ps)	
+	set dimen(clps1J) = dimen(Doz_ps)	
+	set dimen(clps1H) = dimen(Doz_ps)	
+	set dimen(clps1K) = dimen(Doz_ps)
+        set dimen(cldecY) = dimen(Doz_ps)
+        set dimen(cldecJ) = dimen(Doz_ps)
+        set dimen(cldecH) = dimen(Doz_ps)
+        set dimen(cldecK) = dimen(Doz_ps)
+	
+	
+	foreach j {Y J H K}{
+		set cl$j = (De$j > 99.)?1:0
+		set clps1$j = Doz_ps-Doz_ps
+                set cldec$j = Doz_ps-Doz_ps
+
+	}
+
+
+	#--on DECam ---non det err=999 on zdec and -1 on the others 
+	set dimen(clg_dec) = dimen(Dog_dec)
+	set dimen(clr_dec) = dimen(Dor_dec)
+	set dimen(clz_dec) = dimen(Doz_dec)
+	set dimen(clps1g_dec) = dimen(Dog_dec)
+	set dimen(clps1r_dec) = dimen(Dor_dec)	
+	set dimen(clps1z_dec) = dimen(Doz_dec)	
+        set dimen(cldecg_dec) = dimen(Dog_dec)
+        set dimen(cldecr_dec) = dimen(Dor_dec)
+        set dimen(cldecz_dec) = dimen(Doz_dec)
+
+	foreach j {z_dec } {
+		set cl$j   = (De$j > 99.)?1:0
+                set clps1$j = Doz_ps-Doz_ps
+		set cldec$j = (De$j<0.)?1:0
+	}
+
+
+	#--on I_NTT---non det err=999.
+	set dimen(clI_NTT)    = dimen(Doz_ps)
+	set dimen(clps1I_NTT) = dimen(Doz_ps)
+        set dimen(cldecI_NTT) = dimen(Doz_ps)
+
+	
+	foreach j {I_NTT} {
+		set cl$j = (De$j > 99.)?1:0
+		set clps1$j = Doz_ps-Doz_ps
+                set cldec$j = Doz_ps-Doz_ps
+
+	}
+
+	
+	
+	#--on wise---snr<3
+	set dimen(clW1) = dimen(Doz_ps)	
+	set dimen(clW2) = dimen(Doz_ps)	
+	set dimen(clps1W1) = dimen(Doz_ps)	
+	set dimen(clps1W2) = dimen(Doz_ps)	
+        set dimen(cldecW1) = dimen(Doz_ps)
+        set dimen(cldecW2) = dimen(Doz_ps)
+	
+	foreach j {W1 W2}{
+		set cl$j = (snr$j < 3.)?1:0
+		set clps1$j = Doz_ps-Doz_ps
+                set cldec$j = Doz_ps-Doz_ps
+		#---solo per marzo 2016
+		#set cl$j = (De$j < 1e-4)?1:0
+		#set clps1$j = Doz_ps-Doz_ps		
+
+	}
+	
+
+
+define_vec
+
+	set dimen(Dai_ps) = dimen(Doz_ps)
+	set dimen(Daz_ps) = dimen(Doz_ps)
+	set dimen(Day_ps) = dimen(Doz_ps)
+	set dimen(Dag_dec) = dimen(Doz_ps)
+	set dimen(Dar_dec) = dimen(Doz_ps)
+	set dimen(Daz_dec) = dimen(Doz_ps)
+	set dimen(Daz_sdss) = dimen(Doz_ps)
+	set dimen(DaI_NTT) = dimen(Doz_ps)
+	set dimen(DaY)    = dimen(Doz_ps)
+	set dimen(DaJ)    = dimen(Doz_ps)
+	set dimen(DaH)    = dimen(Doz_ps)
+	set dimen(DaK)    = dimen(Doz_ps)
+	set dimen(DaW1)   = dimen(Doz_ps)
+	set dimen(DaW2)   = dimen(Doz_ps)
+
+	set dimen(Datmpi_ps) = dimen(Doz_ps)
+	set dimen(Datmpz_ps) = dimen(Doz_ps)
+	set dimen(Datmpz_sdss) = dimen(Doz_ps)
+	set dimen(DatmpI_NTT) = dimen(Doz_ps)
+	set dimen(Datmpy_ps) = dimen(Doz_ps)
+	set dimen(Datmpg_dec) = dimen(Doz_ps)
+	set dimen(Datmpr_dec) = dimen(Doz_ps)
+	set dimen(Datmpz_dec) = dimen(Doz_ps)	
+	set dimen(DatmpY)    = dimen(Doz_ps)
+	set dimen(DatmpJ)    = dimen(Doz_ps)
+	set dimen(DatmpH)    = dimen(Doz_ps)
+	set dimen(DatmpK)    = dimen(Doz_ps)
+	set dimen(DatmpW1)   = dimen(Doz_ps)
+	set dimen(DatmpW2)   = dimen(Doz_ps)
+
+	set dimen(Dotmpi_ps) = dimen(Doz_ps)
+	set dimen(Dotmpz_ps) = dimen(Doz_ps)
+	set dimen(Dotmpy_ps) = dimen(Doz_ps)
+	set dimen(Dotmpg_dec) = dimen(Doz_ps)
+	set dimen(Dotmpr_dec) = dimen(Doz_ps)
+	set dimen(Dotmpz_dec) = dimen(Doz_ps)
+	set dimen(DotmpI_NTT) = dimen(Doz_ps)
+	set dimen(DotmpY)    = dimen(Doz_ps)
+	set dimen(DotmpJ)    = dimen(Doz_ps)
+	set dimen(DotmpH)    = dimen(Doz_ps)
+	set dimen(DotmpK)    = dimen(Doz_ps)
+	set dimen(DotmpW1)   = dimen(Doz_ps)
+	set dimen(DotmpW2)   = dimen(Doz_ps)
+
+
+	set dimen(Daei_ps) = dimen(Doz_ps)
+	set dimen(Daez_ps) = dimen(Doz_ps)
+	set dimen(Daez_sdss) = dimen(Doz_ps)
+	set dimen(Daey_ps) = dimen(Doz_ps)
+	set dimen(Daeg_dec) = dimen(Doz_ps)
+	set dimen(Daer_dec) = dimen(Doz_ps)
+	set dimen(Daez_dec) = dimen(Doz_ps)
+	set dimen(DaeI_NTT) = dimen(Doz_ps)
+	set dimen(DaeY)    = dimen(Doz_ps)
+	set dimen(DaeJ)    = dimen(Doz_ps)
+	set dimen(DaeH)    = dimen(Doz_ps)
+	set dimen(DaeK)    = dimen(Doz_ps)
+	set dimen(DaeW1)   = dimen(Doz_ps)
+	set dimen(DaeW2)   = dimen(Doz_ps)

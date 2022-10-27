@@ -1,0 +1,433 @@
+# Macro which computes the sed fit for BDs in input for plotsed_all.sm
+# It is the third macro to read
+# 
+# sed_BDs_allB
+#
+# scale_BDsB :
+#
+# sed_BDs :
+#
+# BD_mag_wise_MD :
+#
+# BD_mag_wise_LD :
+#
+# BD_mag_wise_TD :
+
+
+
+sed_BDs_allB 1
+
+	#---scale the BDs template to the photometry
+	scale_BDsB $1
+	
+	#---sed BDs wich calls scale for WISE
+	sed_BDs 
+	
+	
+
+scale_BDsB 1
+
+
+	#---scale BDs flux
+	foreach j {M4 M5 M6 M7 M8 M9} {  	
+		set x = wa$j
+		set y = F$j
+		magnitude2 "$!1"
+	        set Fa$j=y*10.**(0.4*($m1-$1_data))
+	}
+
+	#---scale BDs flux
+	foreach j {L0 L1 L2 L3 L4 L5 L6 L7 L8 L9} {  	
+		set x = wa$j
+		set y = F$j
+		magnitude2 "$!1"
+	        set Fa$j=y*10.**(0.4*($m1-$1_data))
+	}
+	
+	foreach j {T0 T1 T2 T3 T4 T5 T6 T7 T8} {  	
+		set x = wa$j
+		set y = F$j
+		magnitude2 "$!1"
+	        set Fa$j=y*10.**(0.4*($m1-$1_data))
+
+	}	
+
+
+sed_BDs
+
+	#--BDs magnitudes
+	
+	set dimen(TchiSLD) = 0.
+	set dimen(TchiSTD) = 0.
+	set dimen(TchiSMD) = 0.
+
+	#--MDwarf
+	foreach j {M4 M5 M6 M7 M8 M9} {  	
+
+		set x = wa$j
+		set y = Fa$j
+		
+	     	#---panstarrs
+	     	magnitude2 i_ps
+	     	set i_ps$j = $f1*1e17
+	     	magnitude2 z_ps
+	     	set z_ps$j = $f1*1e17
+		set mz_ps$j = $m1
+	     	magnitude2 y_ps
+	     	set y_ps$j = $f1*1e17
+	     	#---DECam
+	     	magnitude2 g_decam
+	     	set g_dec$j = $f1*1e17
+	     	magnitude2 r_decam
+	     	set r_dec$j = $f1*1e17
+	     	magnitude2 z_decam
+	     	set z_dec$j = $f1*1e17
+		#--sdss MOMENTARY for Z_NTT
+	     	magnitude2 z
+	     	set z_sdss$j = $f1*1e17		
+		#--I_NTT
+	     	magnitude2 i_ef
+	     	set I_NTT$j = $f1*1e17		
+	     	#---ukidss
+	     	magnitude2 Y_ab
+	     	set Y$j = $f1*1e17
+	     	magnitude2 J_ab
+	     	set J$j = $f1*1e17
+	     	set mJ$j = $m1
+	     	magnitude2 H_ab
+	     	set H$j = $f1*1e17
+	     	magnitude2 K_ab
+	     	set K$j = $f1*1e17
+		set mK$j = $m1
+		
+		#---test magnitude
+		set zJ_$j = mz_ps$j-mJ$j
+		
+		#---wise magnitudes
+		BD_mag_wise_MD
+		
+		set model$j = i_ps$j concat I_NTT$j concat z_ps$j concat z_dec$j concat y_ps$j concat Y$j concat J$j concat H$j concat K$j concat W1$j concat W2$j
+		#set model$j = z_ps$j  concat z_dec$j concat Y$j concat J$j concat H$j concat K$j concat W1$j concat W2$j
+		set Tchi$j=((indata-model$j)*(indata-model$j))/(inerror**2)
+
+		#---limiti :modello sopra dato --> prob esplode
+  	        #set Tchi$j=(condlimps1&&model$j>indata)?1e6:((indata-model$j)*(indata-model$j))/(inerror**2)
+		#---limit: modello sotto dato --> P = 0 --> bene!
+  	        #set Tchi$j=(condlimps1&&model$j<=indata)?0.:Tchi$j
+
+		set TchiS$j = sum(Tchi$j)
+		set TchiSMD = TchiSMD concat TchiS$j
+
+	}
+
+	
+	#--I do not take the wise filters for now
+	#--LDwarf
+	foreach j {L0 L1 L2 L3 L4 L5 L6 L7 L8 L9} {  	
+
+		set x = wa$j
+		set y = Fa$j
+		
+	     	#---panstarrs
+	     	magnitude2 i_ps
+	     	set i_ps$j = $f1*1e17
+	     	magnitude2 z_ps
+	     	set z_ps$j = $f1*1e17
+	     	magnitude2 y_ps
+	     	set y_ps$j = $f1*1e17
+	     	#---DECam
+	     	magnitude2 g_decam
+	     	set g_dec$j = $f1*1e17
+	     	magnitude2 r_decam
+	     	set r_dec$j = $f1*1e17
+	     	magnitude2 z_decam
+	     	set z_dec$j = $f1*1e17		
+		#--sdss MOMENTARY for Z_NTT
+	     	magnitude2 z
+	     	set z_sdss$j = $f1*1e17		
+		#--I_NTT
+	     	magnitude2 i_ef
+	     	set I_NTT$j = $f1*1e17		
+	     	#---UKIDSS
+	     	magnitude2 Y_ab
+	     	set Y_uk$j = $f1*1e17
+	     	magnitude2 J_ab
+	     	set J_uk$j = $f1*1e17
+	     	magnitude2 H_ab
+	     	set H_uk$j = $f1*1e17
+	     	magnitude2 K_ab
+	     	set K_uk$j = $f1*1e17
+	     	#---VHS
+	     	magnitude2 Y_ab
+	     	set Y$j = $f1*1e17
+	     	magnitude2 J_ab
+	     	set J$j = $f1*1e17
+	     	magnitude2 H_ab
+	     	set H$j = $f1*1e17
+	     	magnitude2 K_ab
+	     	set K$j = $f1*1e17
+		set mK$j = $m1
+		
+		#---wise magnitudes
+		BD_mag_wise_LD
+		
+		set modela$j = i_ps$j concat  I_NTT$j concat z_ps$j concat z_dec$j concat y_ps$j 
+		#set modela$j = z_ps$j concat z_dec$j
+		set modelb$j = Y$j concat J$j concat H$j concat K$j concat W1$j concat W2$j
+		set model$j = modela$j concat modelb$j
+		
+		set Tchi$j=((indata-model$j)*(indata-model$j))/(inerror**2)
+		#---limiti :modello sopra dato --> prob esplode
+  	        #set Tchi$j=(condlim&&model$j>indata)?1e+6:((indata-model$j)*(indata-model$j))/(inerror**2)
+		#---limit: modello sotto dato --> P = 0 --> bene!
+  	        #set Tchi$j=(condlim&&model$j<=indata)?0:Tchi$j
+
+		set TchiS$j = sum(Tchi$j)
+		set TchiSLD = TchiSLD concat TchiS$j
+
+	}
+	
+
+	#---TDwarf
+	foreach j {T0 T1 T2 T3 T4 T5 T6 T7 T8} {  	
+
+		set x = wa$j
+		set y = Fa$j
+		
+	     	#---panstarrs
+	     	magnitude2 i_ps
+	     	set i_ps$j = $f1*1e17
+	     	magnitude2 z_ps
+	     	set z_ps$j = $f1*1e17
+	     	magnitude2 y_ps
+	     	set y_ps$j = $f1*1e17
+	     	#---DECam
+	     	magnitude2 g_decam
+	     	set g_dec$j = $f1*1e17
+	     	magnitude2 r_decam
+	     	set r_dec$j = $f1*1e17
+	     	magnitude2 z_decam
+	     	set z_dec$j = $f1*1e17		
+		#--sdss MOMENTARY for Z_NTT
+	     	magnitude2 z
+	     	set z_sdss$j = $f1*1e17		
+		#--I_NTT
+	     	magnitude2 i_ef
+	     	set I_NTT$j = $f1*1e17		
+	     	#---UKIDSS
+	     	magnitude2 Y_ab
+	     	set Y_uk$j = $f1*1e17
+	     	magnitude2 J_ab
+	     	set J_uk$j = $f1*1e17
+	     	magnitude2 H_ab
+	     	set H_uk$j = $f1*1e17
+	     	magnitude2 K_ab
+	     	set K_uk$j = $f1*1e17
+	     	#---VHS
+	     	magnitude2 Y_ab
+	     	set Y$j = $f1*1e17
+	     	magnitude2 J_ab
+	     	set J$j = $f1*1e17
+	     	magnitude2 H_ab
+	     	set H$j = $f1*1e17
+	     	magnitude2 K_ab
+	     	set K$j = $f1*1e17
+	     	set mK$j = $m1
+
+		#---wise magnitudes
+		BD_mag_wise_TD
+		
+
+		set modela$j = i_ps$j concat  I_NTT$j concat z_ps$j concat z_dec$j concat y_ps$j 
+		#set modela$j = z_ps$j concat z_dec$j 
+		set modelb$j = Y$j concat J$j concat H$j concat K$j concat W1$j concat W2$j
+		set model$j = modela$j concat modelb$j
+
+  	        set Tchi$j=((indata-model$j)*(indata-model$j))/(inerror**2)
+		#set Tchi$j=(condlim&&model$j>indata)?1e+6:((indata-model$j)*(indata-model$j))/(inerror**2)
+		#---limit: modello sotto dato --> P = 0 --> bene!
+  	        #set Tchi$j=(condlim&&model$j<=indata)?0:Tchi$j
+		set TchiS$j = sum(Tchi$j)
+		set TchiSTD = TchiSTD concat TchiS$j
+
+	}
+
+	
+	#echo "---L0---"
+	#print {indataL0}
+	#echo "---L1---"
+	#print {indataL1}
+	echo "Tchi per ciascun modello"
+	#print {TchiL0 TchiSL0}
+	echo "Totale per le LDwarf e TDwarf"
+	#print {TchiSLD TchiSTD}
+	
+	#---Concatenate for all the Dwarfs
+	set TchiSD = TchiSMD concat TchiSLD concat TchiSTD
+	set typeSD = {M4 M5 M6 M7 M8 M9 L0 L1 L2 L3 L4 L5 L6 L7 L8 L9 T0 T1 T2 T3 T4 T5 T6 T7 T8}
+	set typeSD_len = 0, $(dimen(typeSD))-1, 1.
+	
+	echo "Totale per le Dwarf"
+	#print {typeSD TchiSD}
+	
+	#---Probability for BDs
+	#set P_BD = 1/(2*3.1415)*exp((TchiSD**2)/2)
+	#set lP_BD = -lg(1/(2*3.1415))*(TchiSD**2)/2	
+	
+	#--Best of Brown Dwarf
+	set sorterBD = TchiSD
+	set typeSD_tmp = typeSD
+	set typeSD_len_tmp = typeSD_len
+	#set lP_BD_tmp = lP_BD
+	sort {sorterBD typeSD_tmp typeSD_len_tmp}
+	set best_type_BD = typeSD_tmp[0]
+	set best_Tchi_BD = sorterBD[0]
+	#set best_lP_BD    = lP_BD_tmp[0]
+	set best_typeSD_len    = typeSD_len_tmp[0]
+
+	#---Save 2nd best photometry of BDs	
+	set best2_type_BD = typeSD_tmp[1]
+	set best2_Tchi_BD = sorterBD[1]
+	#set best2_lP_BD    = lP_BD_tmp[1]
+	set best2_typeSD_len    = typeSD_len_tmp[1]
+	
+	
+	#---save the photometry of best BDs
+	set best_phot_BDs = model$(best_type_BD)
+	set best2_phot_BDs = model$(best2_type_BD)
+	
+	echo "Totale per le Dwarf in ordine"
+	print {typeSD_tmp sorterBD}
+	print {best_type_BD best_Tchi_BD}
+
+
+
+BD_mag_wise_MD
+
+	#---Tab 1 from Skrzypek et al. 2015
+	data "BDcolors_Sk15tab1_MD.tab"
+	read {SpTDBw_M 1.s i_z 2 z_Y 3 Y_J 4 J_H 5 H_K 6 K_W1_M 7 W1_W2_M 8}
+
+	#---from vega to AB mag
+	define cK   1.900
+	define cW1  2.683
+	define cW2  3.319
+
+	set K_W1M4 = K_W1_M[0]
+	set K_W1M5 = K_W1_M[1]
+	set K_W1M6 = K_W1_M[2]
+	set K_W1M7 = K_W1_M[3]
+	set K_W1M8 = K_W1_M[4]
+	set K_W1M9 = K_W1_M[5]
+
+
+	set W1_W2M4 = W1_W2_M[0]
+	set W1_W2M5 = W1_W2_M[1]
+	set W1_W2M6 = W1_W2_M[2]
+	set W1_W2M7 = W1_W2_M[3]
+	set W1_W2M8 = W1_W2_M[4]
+	set W1_W2M9 = W1_W2_M[5]
+
+
+	set mW1$j = mK$j - K_W1$j + ($cK-$cW1) 
+	set mW2$j = mW1$j - W1_W2$j + ($cW2-$cW1)
+	set mW1W2$j = mW1$j-mW2$j
+	set W1$j = (3*10**((23.9-mW1$j)/2.5)*10**(-11)/(33526**2))*1e17
+	set W2$j = (3*10**((23.9-mW2$j)/2.5)*10**(-11)/(46028**2))*1e17
+	
+
+	echo "---type of brown dwarfs---"
+	#print {SpTDBw_M}
+
+
+
+BD_mag_wise_LD
+
+	#---Tab 1 from Skrzypek et al. 2015
+	data "BDcolors_Sk15tab1_LD.tab"
+	read {SpTDBw_L 1.s i_z 2 z_Y 3 Y_J 4 J_H 5 H_K 6 K_W1_L 7 W1_W2_L 8}
+
+	#---from vega to AB mag
+	define cK   1.900
+	define cW1  2.683
+	define cW2  3.319
+
+	set K_W1L0 = K_W1_L[0]
+	set K_W1L1 = K_W1_L[1]
+	set K_W1L2 = K_W1_L[2]
+	set K_W1L3 = K_W1_L[3]
+	set K_W1L4 = K_W1_L[4]
+	set K_W1L5 = K_W1_L[5]
+	set K_W1L6 = K_W1_L[6]
+	set K_W1L7 = K_W1_L[7]
+	set K_W1L8 = K_W1_L[8]
+	set K_W1L9 = K_W1_L[9]
+
+
+	set W1_W2L0 = W1_W2_L[0]
+	set W1_W2L1 = W1_W2_L[1]
+	set W1_W2L2 = W1_W2_L[2]
+	set W1_W2L3 = W1_W2_L[3]
+	set W1_W2L4 = W1_W2_L[4]
+	set W1_W2L5 = W1_W2_L[5]
+	set W1_W2L6 = W1_W2_L[6]
+	set W1_W2L7 = W1_W2_L[7]
+	set W1_W2L8 = W1_W2_L[8]
+	set W1_W2L9 = W1_W2_L[9]
+
+
+	set mW1$j = mK$j - K_W1$j + ($cK-$cW1) 
+	set mW2$j = mW1$j - W1_W2$j + ($cW2-$cW1)
+	set W1$j = (3*10**((23.9-mW1$j)/2.5)*10**(-11)/(33526**2))*1e17
+	set W2$j = (3*10**((23.9-mW2$j)/2.5)*10**(-11)/(46028**2))*1e17
+	
+
+	echo "---type of brown dwarfs---"
+	#print {SpTDBw_L}
+
+
+BD_mag_wise_TD
+
+	#---Tab 1 from Skrzypek et al. 2015
+	data "BDcolors_Sk15tab1_TD.tab"
+	read {SpTDBw_T 1.s i_z 2 z_Y 3 Y_J 4 J_H 5 H_K 6 K_W1_T 7 W1_W2_T 8}
+
+	#---from vega to AB mag
+	define cK   1.900
+	define cW1  2.683
+	define cW2  3.319
+
+	set K_W1T0 = K_W1_T[0]
+	set K_W1T1 = K_W1_T[1]
+	set K_W1T2 = K_W1_T[2]
+	set K_W1T3 = K_W1_T[3]
+	set K_W1T4 = K_W1_T[4]
+	set K_W1T5 = K_W1_T[5]
+	set K_W1T6 = K_W1_T[6]
+	set K_W1T7 = K_W1_T[7]
+	set K_W1T8 = K_W1_T[8]
+
+
+	set W1_W2T0 = W1_W2_T[0]
+	set W1_W2T1 = W1_W2_T[1]
+	set W1_W2T2 = W1_W2_T[2]
+	set W1_W2T3 = W1_W2_T[3]
+	set W1_W2T4 = W1_W2_T[4]
+	set W1_W2T5 = W1_W2_T[5]
+	set W1_W2T6 = W1_W2_T[6]
+	set W1_W2T7 = W1_W2_T[7]
+	set W1_W2T8 = W1_W2_T[8]
+
+	set mW1$j = mK$j - K_W1$j + ($cK-$cW1) 
+	set mW2$j = mW1$j - W1_W2$j + ($cW2-$cW1)
+	set W1$j = (3*10**((23.9-mW1$j)/2.5)*10**(-11)/(33526**2))*1e17
+	set W2$j = (3*10**((23.9-mW2$j)/2.5)*10**(-11)/(46028**2))*1e17
+	
+
+	echo "---type of brown dwarfs---"
+	#print {SpTDBw_T}
+
+
+	#print BDmagWISE.txt {SpT K_conc W1 W2}
+
+

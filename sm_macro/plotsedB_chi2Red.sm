@@ -1,0 +1,42 @@
+# Macro which computes the reduced chi square in input for plotsed_all.sm
+# It is the fifth macro to call
+# 
+# chi2_redB
+#
+
+chi2_redB	
+
+	# Calculate the reduced chi2
+	#--number of filter used
+	set lty_u = lty    if(!condlim|condlimps1) 
+	set N = $(dimen(lty_u))
+	
+	#---degrees of freedom
+	set Nf_QSO = 1
+	set Nf_BD  = 1
+
+	#set TchiTSQSO_r     = (N>0.9999&&N<1.00001)?TchiTSQSO:TchiTSQSO/(N-Nf_QSO)
+	
+	#set cond_lim = (N>1.)?1:0
+		
+	#set TchiTSQSO_r     = (cond_test)?(TchiTSQSO/(N-Nf_QSO)):TchiTSQSO
+	#set TchiTPS1aSQSO_r = (N>1.)?TchiTPS1aSQSO/(N-Nf_QSO):TchiTPS1aSQSO/(Nf_QSO)
+	#set TchiTPS1lSQSO_r = (N>1.)?TchiTPS1lSQSO/(N-Nf_QSO):TchiTPS1lSQSO/(Nf_QSO)
+	#set TchiTPS1hSQSO_r = (N>1.)?TchiTPS1hSQSO/(N-Nf_QSO):TchiTPS1hSQSO/(Nf_QSO)
+	#set TchiSDS_r       = (N>1.)?TchiSD/(N-Nf_BD):TchiSD/(Nf_BD)
+	#set TchiTSQSOall_r  = (N>1.)?TchiTallSQSO/(N-Nf_QSO):TchiTallSQSO/(Nf_QSO)
+	
+	
+	set TchiTSQSO_r     = TchiTSQSO/(N-Nf_QSO)
+	set TchiTPS1aSQSO_r = TchiTPS1aSQSO/(N-Nf_QSO)
+	set TchiTPS1lSQSO_r = TchiTPS1lSQSO/(N-Nf_QSO)
+	set TchiTPS1hSQSO_r = TchiTPS1hSQSO/(N-Nf_QSO)
+	set TchiSDS_r       = TchiSD/(N-Nf_BD)
+	set TchiTSQSOall_r  = TchiTallSQSO/(N-Nf_QSO)
+
+	set best_Tchi_QSO_r = best_Tchi_QSO/(N-Nf_QSO)
+	set best_Tchi_BD_r  = best_Tchi_BD/(N-Nf_BD)
+	set best2_Tchi_BD_r  = best2_Tchi_BD/(N-Nf_BD)
+	set F_r = best_Tchi_QSO_r/best_Tchi_BD_r
+	
+	print {best_Tchi_QSO_r  best_Tchi_BD_r F_r}

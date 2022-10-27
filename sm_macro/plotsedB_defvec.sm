@@ -1,0 +1,109 @@
+# Macro which define bands in input for plotsed_all.sm
+# It is the first macro to read
+#
+# define_bandsB :
+#
+
+define_bandsB
+
+	#---Define the bands used in wavelength in A for surveys
+	#--- z_ps, y_ps, Y_uk, J_uk, H_uk, K_uk, w1, w2 
+     	#set ll = {7545 8679 9633 10000 12500 16000 21500 33526 46028}
+     	#set ll = {0 8700 10040 9700 12000 16000 22000 34000 46000}
+	set lg_dec = 4750
+	set lr_dec = 6350
+	set li_ps  = 7545
+	set lI_NTT = 8018
+	set lz_ps = 8679
+	set lz_sdss = 8931
+	set lz_dec = 9250
+	set ly_ps = 9633
+	set lY = 10000
+	set lJ = 12500
+	set lH = 16500
+	set lK = 21500
+	set lY_uk = 10000
+	set lJ_uk = 12500
+	set lH_uk = 16500
+	set lK_uk = 21500
+	set lW1 = 33526
+	set lW2 = 46028
+
+        #---Band width
+	set dlg_dec = 1500
+	set dlr_dec = 1500
+	set dli_ps  = 1242
+	set dlI_NTT = 1548 
+	set dlz_ps = 965
+	set dlz_sdss = 1500 add  u,g,r,i  widths
+	set dlz_dec = 1500
+	set dly_ps = 615
+	set dlY = 1200
+	set dlJ = 2130
+	set dlH = 3070
+	set dlK = 3900
+	set dlY_uk =  1200
+	set dlJ_uk =  2130
+	set dlH_uk =  3070
+	set dlK_uk =  3900
+	set dlW1 = 6626
+	set dlW2 = 10422
+		
+
+	#---Define the bands used in wavelenght in A for follow up photometry
+	#---i_G z_G J_G H_G K_G i_cafos
+	#---z_o2k Y_o2k J_o2k H_o2k K_o2k
+	set li_G = 7481
+	set lz_G = 8931
+	set lJ_G = 12500
+	set lH_G = 16500
+	set lK_G = 21500
+	set lJ_NTT = 12470
+	set lH_NTT = 16530
+	set li_cafos = 7642
+	set lz_o2k = 9084
+	set lY_o2k = 10394
+	set lJ_o2k = 12340
+	set lH_o2k = 16520
+	set lK_o2k = 21621
+		
+        #---Band width
+	set dli_G = 1200  #---not used in the SED code but for plot
+	set dlz_G = 1000
+	set dlJ_G = 2000
+	set dlH_G = 3000
+	set dlK_G = 2000
+	set dlH_NTT = 2970
+	set dlJ_NTT = 2900
+	set dli_cafos = 1390
+	set dlz_o2k = 1580
+	set dlY_o2k = 2046
+	set dlJ_o2k = 1636
+	set dlH_o2k = 1027
+	set dlK_o2k = 2735
+
+
+	set ltysu = {i_ps z_ps z_dec y_ps Y J H K W1 W2}
+	#set lty = {z_ps z_dec Y J H K W1 W2}
+	set llsu = li_ps concat lz_ps concat lz_dec concat ly_ps concat  lY concat lJ concat lH concat lK concat lW1 concat lW2
+	set dlsu = dli_ps concat dlz_ps concat dlz_dec concat dly_ps concat  dlY concat dlJ concat dlH concat dlK concat dlW1 concat dlW2
+	#set ll = lz_ps concat lz_dec concat  lY concat lJ concat lH concat lK concat lW1 concat lW2
+	#set dl = dlz_ps concat dlz_dec concat dlY concat dlJ concat dlH concat dlK concat dlW1 concat dlW2
+	
+	#---follow up photometry
+	#set ltyfp = {i_GROND z_GROND J_GROND H_GROND K_GROND i_cafos z_o2k Y_o2k J_o2k H_o2k K_o2k}
+	#set llfp = li_G concat lz_G concat lJ_G concat lH_G concat lK_G concat li_cafos concat lz_o2k concat lY_o2k concat lJ_o2k concat lH_o2k concat lK_o2k
+	#set dlfp = dli_G concat dlz_G concat dlJ_G concat dlH_G concat dlK_G concat dli_cafos concat dlz_o2k concat dlY_o2k concat dlJ_o2k concat dlH_o2k concat dlK_o2k
+	#set ltyfp = {I_NTT z_NTT i_GROND z_GROND H_GROND K_GROND i_cafos z_o2k H_o2k }
+	#set llfp = lI_NTT concat lz_sdss concat li_G concat lz_G concat  lH_G concat lK_G concat li_cafos concat lz_o2k concat lH_o2k 
+	#set dlfp = dlI_NTT concat dlz_sdss concat dli_G concat dlz_G concat dlH_G concat dlK_G concat dli_cafos concat dlz_o2k concat dlH_o2k
+	set ltyfp = {I_NTT z_NTT z_GROND J_GROND H_GROND H_NTT }
+	set llfp = lI_NTT concat lz_sdss concat lz_G  concat lJ_G concat  lH_G concat lH_NTT  
+	set dlfp = dlI_NTT concat dlz_sdss concat dlz_G  concat dlJ_G concat dlH_G concat dlH_NTT
+	
+	
+	echo "----Bands used survey---"
+	print {ltysu llsu dlsu} 
+	echo ----Bands used follow up photometry---
+	#print {ltyfp llfp dlfp} 
+ 

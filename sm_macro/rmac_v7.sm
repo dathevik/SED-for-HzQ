@@ -1,0 +1,1807 @@
+# News in v7:
+# - extinction_law computes the extinction according to Calzetti+00
+# - lin_interp allows linear interpolation of vectors
+#
+ # News in version 6:
+ #   - sm folder structure has been completely revised
+ #   - mm package now included at start
+ #
+ # News in version 5:
+ #   - qso_noGP corrects the SDSS quasar template for GP absorption
+ #   - scripts to compute quasar tracks responsably
+ #
+ # News in version 4:
+ #   - tool to compute median of 3 vectors 
+ #   - models of the IGM from Meiksin 2006
+ #   - factorial computer
+ #
+
+
+	
+
+
+
+
+################# Plotting utilities #################
+init_plot
+	erase
+	expand 1.250001
+	lweight 2
+	define TeX_strings 1
+	location 3500 31000 3500 31000
+
+kur		# read cursor and put in vectors x_cur, y_cur
+ # from R. Falomo's rflib2.sm
+		cursor x_cur y_cur
+
+
+vec_arrow 34
+	if($?4){define scalearrow $4}else{define scalearrow 1.}
+	set _vx1=$1
+	set _vy1=$2
+	
+	if($3==1){
+	   define _arlngx ($scalearrow*($fx2-$fx1)/12.)
+	   define _arlngy 0.
+	}
+	if($3==2){
+	   define _arlngx 0.
+	   define _arlngy ($scalearrow*($fy2-$fy1)/12.)
+	}
+	if($3==3){
+	   define _arlngx (-$scalearrow*($fx2-$fx1)/12.)
+	   define _arlngy 0.
+	}
+	if($3==4){
+	   define _arlngx 0.
+	   define _arlngy (-$scalearrow*($fy2-$fy1)/12.)
+	}
+
+        set _vx2=_vx1+$_arlngx
+        set _vy2=_vy1+$_arlngy
+	do _i=0,dimen(_vx1)-1{
+	   draw_arrow $(_vx1[$_i]) $(_vy1[$_i]) $(_vx2[$_i]) $(_vy2[$_i])
+	}
+
+
+shadebox 5
+   # Shade a box from location ($1,$2) to ($3,$4) with spacing $5
+      set _fake_x1=$1
+      set _fake_x2=$3
+      set _fake_y1=$2
+      set _fake_y2=$4
+      set _fake_x=_fake_x1 concat _fake_x2 concat _fake_x2 concat _fake_x1
+      set _fake_y=_fake_y1 concat _fake_y1 concat _fake_y2 concat _fake_y2
+      
+      shade $5 _fake_x _fake_y
+
+
+distr   17
+ # $1=vector to be plot as histogram
+ # [$2-$5]=limits in the x and y axis
+ # [$6]=bin size
+ # [$7]=erase?
+ #
+	if($?7){define erazer $7}else{
+	define erazer ? <Erase? 0=NO, 1=YES>}
+	if($erazer==1){erase}
+	
+	if($?6){define binwidth $6}else{
+	define binwidth ? <Set bin width:>}
+	
+	limits $1 0 10
+	if($?2){
+	  define fx1 $2
+	  define fx2 $3}
+		  
+	set bin=$fx1,$fx2,$binwidth
+	
+	set freq=histogram($1:bin)
+	
+	limits $fx1 $fx2 freq
+	
+	if($?4){
+	  define fy1 $4
+	  define fy2 $5}
+	limits $fx1 $fx2 $fy1 $fy2
+
+	histogram bin freq
+
+
+logdistr 17
+ # $1=vector to be plot as histogram
+ # [$2-$5]=limits in the x and y axis
+ # [$6]=bin size
+ # [$7]=erase?
+ #
+	if($?7){define erazer $7}else{
+	define erazer ? <Erase? 0=NO, 1=YES>}
+	if($erazer==1){erase}
+	
+	if($?6){define binwidth $6}else{
+	define binwidth ? <Set bin width:>}
+	
+	limits $1 0 10
+	if($?2){
+	  define fx1 $2
+	  define fx2 $3}
+		  
+	set bin=$fx1,$fx2,$binwidth
+	
+	set freq=histogram($1:bin)
+	set freq=(freq>0)?freq:1e-9
+	set lfreq=lg(freq)
+	
+	minimaxi lfreq limmin limmax
+	
+	limits $fx1 $fx2 -0.9 $limmax
+	
+	if($?4){
+	  define fy1 $4
+	  define fy2 $5}
+	limits $fx1 $fx2 $fy1 $fy2
+
+	histogram bin lfreq
+		
+
+
+
+worldmap 2
+ # $1= RA or longitude
+ # $2= dec or latitude
+ # This macro draw a world projection using the Mollweide projection
+ # The output vectors are wm_x and wm_y
+ 	set _dd=$2*pi/180.
+	
+ 	set _ttp=(-_dd-sin(_dd)+pi*sin(_dd))/(1.+cos(_dd))
+	
+ 	do i_i=0,200{
+	   set _dttp=(-_ttp-sin(_ttp)+pi*sin(_dd))/(1.+cos(_ttp))
+	   set _ttp=_ttp+_dttp
+	}
+ 	set _tt=_ttp/2.
+ 
+	set wm_x=2*sqrt(2)/pi*($1-180)*pi/180.*cos(_tt)
+	set wm_y=sqrt(2)*sin(_tt)
+ 
+
+setgrid_wm
+	set parp60a=0,360,20
+	set parp30a=0,360,20
+	set parn00a=0,360,20
+	set parm30a=0,360,20
+	set parm60a=0,360,20
+
+	set parp60d=parp60a-parp60a+60 
+	set parp30d=parp30a-parp30a+30 
+	set parn00d=parn00a-parn00a+00 
+	set parm30d=parm30a-parm30a-30 
+	set parm60d=parm60a-parm60a-60 
+	
+	worldmap parp60a parp60d
+	set wm_xpp60=wm_x
+	set wm_ypp60=wm_y
+	
+	worldmap parp30a parp30d
+	set wm_xpp30=wm_x
+	set wm_ypp30=wm_y
+	
+	worldmap parn00a parn00d
+	set wm_xpn00=wm_x
+	set wm_ypn00=wm_y
+	
+	worldmap parm30a parm30d
+	set wm_xpm30=wm_x
+	set wm_ypm30=wm_y
+	
+	worldmap parm60a parm60d
+	set wm_xpm60=wm_x
+	set wm_ypm60=wm_y
+	
+
+	set mer000d=-90,90,5
+	set mer030d=-90,90,5
+	set mer060d=-90,90,5
+	set mer090d=-90,90,5
+	set mer120d=-90,90,5
+	set mer150d=-90,90,5
+	set mer180d=-90,90,5
+	set mer210d=-90,90,5
+	set mer240d=-90,90,5
+	set mer270d=-90,90,5
+	set mer300d=-90,90,5
+	set mer330d=-90,90,5
+	set mer360d=-90,90,5
+
+	set mer000a=mer000d-mer000d+000
+	set mer030a=mer030d-mer030d+030
+	set mer060a=mer060d-mer060d+060
+	set mer090a=mer090d-mer090d+090
+	set mer120a=mer120d-mer120d+120
+	set mer150a=mer150d-mer150d+150
+	set mer180a=mer180d-mer180d+180
+	set mer210a=mer210d-mer210d+210
+	set mer240a=mer240d-mer240d+240
+	set mer270a=mer270d-mer270d+270
+	set mer300a=mer300d-mer300d+300
+	set mer330a=mer330d-mer330d+330
+	set mer360a=mer360d-mer360d+359.99
+
+	
+	worldmap mer000a mer000d
+	set wm_xm000=wm_x
+	set wm_ym000=wm_y
+	worldmap mer030a mer030d
+	set wm_xm030=wm_x
+	set wm_ym030=wm_y
+	worldmap mer060a mer060d
+	set wm_xm060=wm_x
+	set wm_ym060=wm_y
+	worldmap mer090a mer090d
+	set wm_xm090=wm_x
+	set wm_ym090=wm_y
+	worldmap mer120a mer120d
+	set wm_xm120=wm_x
+	set wm_ym120=wm_y
+	worldmap mer150a mer150d
+	set wm_xm150=wm_x
+	set wm_ym150=wm_y
+	worldmap mer180a mer180d
+	set wm_xm180=wm_x
+	set wm_ym180=wm_y
+	worldmap mer210a mer210d
+	set wm_xm210=wm_x
+	set wm_ym210=wm_y
+	worldmap mer240a mer240d
+	set wm_xm240=wm_x
+	set wm_ym240=wm_y
+	worldmap mer270a mer270d
+	set wm_xm270=wm_x
+	set wm_ym270=wm_y
+	worldmap mer300a mer300d
+	set wm_xm300=wm_x
+	set wm_ym300=wm_y
+	worldmap mer330a mer330d
+	set wm_xm330=wm_x
+	set wm_ym330=wm_y
+	worldmap mer360a mer360d
+	set wm_xm360=wm_x
+	set wm_ym360=wm_y
+	
+	
+
+plot_wm	
+	set wm_nx=wm_x
+	set wm_ny=wm_y
+		
+	setgrid_wm
+	
+	erase
+	expand 1.250001
+	lweight 2
+	
+	limits $(-pi) $(pi) $(-pi) $(pi)
+	
+	ltype 1
+	ctype grey
+	connect wm_xpp60 wm_ypp60
+	connect wm_xpp30 wm_ypp30
+	connect wm_xpn00 wm_ypn00
+	connect wm_xpm30 wm_ypm30
+	connect wm_xpm60 wm_ypm60
+	connect wm_xm000 wm_ym000
+	connect wm_xm030 wm_ym030
+	connect wm_xm060 wm_ym060
+	connect wm_xm090 wm_ym090
+	connect wm_xm120 wm_ym120
+	connect wm_xm150 wm_ym150
+	connect wm_xm180 wm_ym180
+	connect wm_xm210 wm_ym210
+	connect wm_xm240 wm_ym240
+	connect wm_xm270 wm_ym270
+	connect wm_xm300 wm_ym300
+	connect wm_xm330 wm_ym330
+	connect wm_xm360 wm_ym360
+	#ctype 0
+	ltype 0
+	#ptype 10 3
+	points wm_nx wm_ny
+	
+
+
+posang  4
+	set _r1=$1
+	set _d1=$2
+	set _r2=$3
+	set _d2=$4
+	
+	set _cd=cos(_d2*pi/180.)
+	set _dr12=(_r1-_r2)*_cd
+	set _dd12=_d1-_d2
+	set $0=atan(_dr12/_dd12)*180./pi
+	
+
+plotfilters
+	data "$macro/../templates/qso_w.tab"
+	read {x0 1 y0 2} 
+	set y0=y0/500.
+	
+	set x05=x0*(1.+0.5)
+	set y05=y0/(1.+0.5)
+	set x10=x0*(1.+1.0)
+	set y10=y0/(1.+1.0)
+	set x15=x0*(1.+1.5)
+	set y15=y0/(1.+1.5)
+	set x20=x0*(1.+2.0)
+	set y20=y0/(1.+2.0)
+	set x25=x0*(1.+2.5)
+	set y25=y0/(1.+2.5)
+	set x30=x0*(1.+3.0)
+	set y30=y0/(1.+3.0)
+	set x35=x0*(1.+3.5)
+	set y35=y0/(1.+3.5)
+	
+	data filter_u_gunn.tab
+	read {xu 1 yu0 2}
+	data filter_g_gunn.tab
+	read {xg 1 yg0 2}
+	data filter_r_gunn.tab
+	read {xr 1 yr0 2}
+	data filter_i_gunn.tab
+	read {xi 1 yi0 2}
+	data filter_z_gunn.tab
+	read {xz 1 yz0 2}
+	#data filter_Js.tab
+	#read {xj 1 yj 2}
+	#data filter_H.tab
+	#read {xh 1 yh 2}
+	#data filter_Ks.tab
+	#read {xk 1 yk 2}
+	
+        foreach pippo {0 05 10 15 20 25 30 35}{
+	   set xu$pippo=xu*(1.+$pippo/10.)
+	   set xg$pippo=xg*(1.+$pippo/10.)
+	   set xr$pippo=xr*(1.+$pippo/10.)
+	   set xi$pippo=xi*(1.+$pippo/10.)
+	   set xz$pippo=xz*(1.+$pippo/10.)
+	}
+	erase
+	expand 1.250001
+	limits 1500 12500 0 0.99
+	
+	location 3500 31000 27500 31000
+	box 0 2 0 0
+	connect x0 y0
+	ctype blue
+	connect xu0 yu0
+	ctype green 
+	connect xg0 yg0
+	ctype red
+	connect xr0 yr0
+	ctype orange
+	connect xi0 yi0
+	ctype indianred
+	connect xz0 yz0
+	ctype 0
+	location 3500 31000 24000 27500
+	box 0 2 0 0
+	connect x05 y05
+	ctype blue
+	connect xu05 yu0
+	ctype green 
+	connect xg05 yg0
+	ctype red
+	connect xr05 yr0
+	ctype orange
+	connect xi05 yi0
+	ctype indianred
+	connect xz05 yz0
+	ctype 0
+
+	location 3500 31000 20500 24000
+	box 0 2 0 0
+	connect x10 y10
+	ctype blue
+	connect xu10 yu0
+	ctype green 
+	connect xg10 yg0
+	ctype red
+	connect xr10 yr0
+	ctype orange
+	connect xi10 yi0
+	ctype indianred
+	connect xz10 yz0
+	ctype 0
+
+	location 3500 31000 17000 20500
+	box 0 2 0 0
+	connect x15 y15
+	ctype blue
+	connect xu15 yu0
+	ctype green 
+	connect xg15 yg0
+	ctype red
+	connect xr15 yr0
+	ctype orange
+	connect xi15 yi0
+	ctype indianred
+	connect xz15 yz0
+	ctype 0
+
+	location 3500 31000 13500 17000
+	box 0 2 0 0
+	connect x20 y20
+	ctype blue
+	connect xu20 yu0
+	ctype green 
+	connect xg20 yg0
+	ctype red
+	connect xr20 yr0
+	ctype orange
+	connect xi20 yi0
+	ctype indianred
+	connect xz20 yz0
+	ctype 0
+
+	location 3500 31000 10000 13500
+	box 0 2 0 0
+	connect x25 y25
+	ctype blue
+	connect xu25 yu0
+	ctype green 
+	connect xg25 yg0
+	ctype red
+	connect xr25 yr0
+	ctype orange
+	connect xi25 yi0
+	ctype indianred
+	connect xz25 yz0
+	ctype 0
+
+	location 3500 31000  6500 10000
+	box 0 2 0 0
+	connect x30 y30
+	ctype blue
+	connect xu30 yu0
+	ctype green 
+	connect xg30 yg0
+	ctype red
+	connect xr30 yr0
+	ctype orange
+	connect xi30 yi0
+	ctype indianred
+	connect xz30 yz0
+	ctype 0
+
+	location 3500 31000 3000 6500
+	box 1 2 0 0
+	connect x35 y35
+	ctype blue
+	connect xu35 yu0
+	ctype green 
+	connect xg35 yg0
+	ctype red
+	connect xr35 yr0
+	ctype orange
+	connect xi35 yi0
+	ctype indianred
+	connect xz35 yz0
+	ctype 0
+
+plot_sdss_lines 01
+	data "$!macro2/../templates/lines_sdss.txt"
+	read {lpeak 1 lineid 2.s lineflux 6}
+
+	if($?1){define redshift $1}else{define redshift 0.}
+	
+	angle 90
+	expand 0.90001
+	ltype 1
+	do i=0,dimen(lpeak)-1{
+	   if($(lpeak[$i])>$fx1/(1.+$redshift)&$(lpeak[$i])<$fx2/(1.+$redshift)){
+	      ctype lightgrey
+	      relocate $(lpeak[$i]*(1.+$redshift)) $fy1
+	      draw     $(lpeak[$i]*(1.+$redshift)) $fy2
+	      ctype 0
+	      relocate $($(lpeak[$i]*(1.+$redshift))-0.2*($fy2-$fy1)) $($fy1+($(lineflux[$i])/200.+0.3)*($fy2-$fy1))
+	      putlabel 5 $(lineid[$i])
+	   }
+	}	
+
+	angle 0
+	ltype 0
+	ctype 0
+
+
+##################### Statistics #####################
+minimaxi       3# find min and max of vector $1 and put in $2 $3 
+ # taken from R. Falomo rflib2.sm
+		set scratch = $1
+		sort {scratch} 
+		define $2 ( scratch[0] )
+		define $3 ( scratch[(dimen(scratch)-1)] )
+
+
+sinh    1
+ # compute hyperbolic sine
+ 	set $0=0.5*(exp($1)-exp(-$1))
+
+cosh    1
+ # compute hyperbolic cosine
+ 	set $0=0.5*(exp($1)+exp(-$1))
+	
+tanh	1
+ # compute hyperbolic tangent
+ 	set $0=(exp(2*$1)-1.)/(exp(2*$1)+1.)
+	
+asinh 1
+ # compute hyperbolic arcsine
+ 	set $0=ln($1+sqrt($1*$1+1.))
+	
+acosh 1
+ # compute hyperbolic arccosine (valid for $1>=1)
+ 	set $0=ln($1+sqrt($1*$1-1.))
+	
+atanh 1
+ # compute hyperbolic arctangent (valid for |$1|<1)
+ 	set $0=0.5*ln((1.+$1)/(1.-$1))
+	
+
+	
+cum	1
+ # compute the cumulative function of a vector
+	set invec=$1
+	define npnt (dimen(invec))
+	
+	set dimen(cdf)=$npnt
+	
+	sort{invec}
+	
+	do i=0,$npnt-1{
+	   set temp=cdf if(invec<$(invec[$i]))
+	   set cdf[$i]=$(dimen(temp))/$npnt
+	}
+
+
+cdf	1
+ # compute the cumulative distribution of a distribution
+ # e.g., useful to pass from pdf to cdf
+	set idvec=0,dimen($1)-1
+	define npnt (dimen(idvec))
+	
+	set dimen(cdf)=dimen($1)
+		
+	do i=0,dimen($1)-1{
+	   set temp=$1 if(idvec<=$(idvec[$i]))
+	   set cdf[$i]=$(sum(temp))
+	}
+	set cdf=cdf/$(sum($1))
+	set $0=cdf
+	
+
+fact   	1
+	set $0=1
+	do _i_j=1,$1{
+	   set $0=$0*$_i_j
+	}
+
+
+safestats 4
+ # if the vector ($1) dimension exceed 2, perform stats
+ # if dimen($1)==2, the macro returns the mean, the discrepancy as STD
+ #     and kur=0.
+ # if dimen($1)==1, the macro returns the value in $1 as mean, and 
+ #     forces STD=kur=1.
+ # if dimen($1)==0, mean=0, STD=kur=1. and an error message is returned.
+ 	set vec=$1
+	if($(dimen(vec))>2){
+	   stats vec $2 $3 $4
+	}else{
+	   if($(dimen(vec))==2){
+	      define $2 (($(vec[0])+$(vec[1]))/2.)
+	      define $3 (abs($(vec[0])-$(vec[1]))/2.)
+	      define $4 1.	   
+	   }else{
+	      if($(dimen(vec))==1){
+	         define $2 ($(vec[0]))
+	         define $3 1.
+	         define $4 1.	   
+	      }else{
+	         define $2 0.
+	         define $3 1.
+	         define $4 1.
+	         # echo ERROR! $1 has null dimension!
+	      }
+	   }
+	}
+
+safestats_w 5
+ # perform weighted statistics of $1 assuming weight=$5
+ # if the vector ($1) dimension exceed 2, perform stats_w
+ # if dimen($1)==2, the macro returns the mean, the discrepancy as STD
+ #     and kur=0.
+ # if dimen($1)==1, the macro returns the value in $1 as mean, and 
+ #     forces STD=kur=1.
+ # if dimen($1)==0, mean=0, STD=kur=1. and an error message is returned.
+ 	set vec=$1
+	set peso=$5
+	set peso2=peso*peso
+	if($(dimen(peso))!=$(dimen(vec))){
+	   echo ERROR! $1 and $5 have different dimensions
+	   define $2 0
+	   define $3 0
+	   define $4 0
+	   return
+	}
+	if($(dimen(vec))>2){
+	   stats_w vec $2 $3 $4 peso
+	}else{
+	   if($(dimen(vec))==2){
+	      define $2 (($(vec[0])/$(peso2[0])+$(vec[1])/$(peso2[1]))/(1./$(peso2[0])+1./$(peso2[1])))
+	      define $3 (1./sqrt(1./$(peso2[0])+1./$(peso2[1])))
+	      define $4 1.
+	   }else{
+	      if($(dimen(vec))==1){
+	         define $2 ($(vec[0]))
+	         define $3 ($(peso[0]))
+	         define $4 1.	   
+	      }else{
+	         define $2 0.
+	         define $3 1.
+	         define $4 1.
+	         # echo ERROR! $1 has null dimension!
+	      }
+	   }
+	}
+
+
+stats_w  5
+	# stats vector mean sigma kurtosis : calculate $mean $sigma etc
+	set peso=$5
+	set peso2=peso*peso
+	DEFINE _n ( DIMEN($1) )
+	DEFINE $2 ( SUM($1/peso2)/SUM(1./peso2) )
+	DEFINE $3 ( 1./sqrt(SUM(1./peso2)))
+	DEFINE $4 ( SUM(($1 - $$2)**4)/($_n - 1)/$$3**4 - 3) # kurtosis
+	DEFINE _n DELETE
+
+
+
+invcgauss 1
+ 	define invcg_A1  (-3.969683028665376e+01)
+ 	define invcg_A2   2.209460984245205e+02
+ 	define invcg_A3  (-2.759285104469687e+02)
+ 	define invcg_A4   1.383577518672690e+02
+ 	define invcg_A5  (-3.066479806614716e+01)
+ 	define invcg_A6   2.506628277459239e+00
+	       
+ 	define invcg_B1  (-5.447609879822406e+01)
+ 	define invcg_B2   1.615858368580409e+02
+ 	define invcg_B3  (-1.556989798598866e+02)
+ 	define invcg_B4   6.680131188771972e+01
+ 	define invcg_B5  (-1.328068155288572e+01)
+	       
+ 	define invcg_C1  (-7.784894002430293e-03)
+ 	define invcg_C2  (-3.223964580411365e-01)
+ 	define invcg_C3  (-2.400758277161838e+00)
+ 	define invcg_C4  (-2.549732539343734e+00)
+ 	define invcg_C5   4.374664141464968e+00
+ 	define invcg_C6   2.938163982698783e+00
+
+ 	define invcg_D1   7.784695709041462e-03
+ 	define invcg_D2   3.224671290700398e-01
+ 	define invcg_D3   2.445134137142996e+00
+ 	define invcg_D4   3.754408661907416e+00
+
+        define P_LOW   0.02425
+        # P_high = 1 - p_low
+        define P_HIGH  0.97575
+
+	set $1=$1 if($1>0.&$1<1)
+	
+	set cond_low=($1<$P_LOW)?1:0
+	set cond_high=($1>=$P_HIGH)?1:0
+	
+	if($(sum(cond_low))>0){
+	   set invcg_q=sqrt(-2*ln($1)) if($1<$P_LOW)
+	set $0_1=((((($invcg_C1*invcg_q+$invcg_C2)*invcg_q+$invcg_C3)*invcg_q+$invcg_C4)*invcg_q+$invcg_C5)*invcg_q+$invcg_C6) \
+	  / (((($invcg_D1*invcg_q+$invcg_D2)*invcg_q+$invcg_D3)*invcg_q+$invcg_D4)*invcg_q+1.)
+	}else{
+	   set dimen($0_1)=0
+	}
+	
+	set invcg_q=$1-0.5 if($1>=$P_LOW&$1<$P_HIGH)
+	set invcg_r=invcg_q*invcg_q
+	set $0_2=((((($invcg_A1*invcg_r+$invcg_A2)*invcg_r+$invcg_A3)*invcg_r+$invcg_A4)*invcg_r+$invcg_A5)*invcg_r+$invcg_A6)*invcg_q \
+	  /((((($invcg_B1*invcg_r+$invcg_B2)*invcg_r+$invcg_B3)*invcg_r+$invcg_B4)*invcg_r+$invcg_B5)*invcg_r+1.)
+
+	if($(sum(cond_high))>0){
+	   set invcg_q=sqrt(-2.*ln(1.-$1)) if($1>=$P_HIGH)
+	set $0_3=-((((($invcg_C1*invcg_q+$invcg_C2)*invcg_q+$invcg_C3)*invcg_q+$invcg_C4)*invcg_q+$invcg_C5)*invcg_q+$invcg_C6) \
+	  / (((($invcg_D1*invcg_q+$invcg_D2)*invcg_q+$invcg_D3)*invcg_q+$invcg_D4)*invcg_q+1.)
+	}else{
+	   set dimen($0_3)=0
+	}
+	
+	set $0=$0_1 concat $0_2 concat $0_3
+	set invcg_e = 0.5 * erfc(-$0/sqrt(2.)) - $1
+	set invcg_u = invcg_e * sqrt(2.*pi) * exp($0*$0/2.)
+	set $0 = $0 - invcg_u/(1. + $0*invcg_u/2.)
+
+
+bilin	2
+        set ttt=$2
+        set hhh=$1          
+        
+	#set tsort=ttt
+        #sort {tsort}
+	#define tmin (tsort[0])
+	#set tsort=reverse(tsort)	
+	#define tmax (tsort[0])
+        #set pass=($tmax-$tmin)/5.
+
+	set hxsort=hhh
+        sort {hxsort}
+	define hxmin (hxsort[0])
+	set hxsort=reverse(hxsort)	
+	define hxmax (hxsort[0])
+        set pass=($hxmax-$hxmin)/5.
+
+	       
+        set xx=$hxmin,$hxmax,$(pass)
+        #set xx=x
+	lsq hhh ttt xx yy rms
+       
+        echo FIT - M1:$a Q1:$b CHI:$CHI2
+        echo FIT - sig_a:$sig_a sig_b:$sig_b rms:$rms
+       
+        set m1=$a
+        set q1=$b
+        		
+        lsq ttt hhh yy xx rms2
+       
+        set yy1=xx
+        set xx1=-$b/$a+yy1/$a
+       
+        echo FIT - M2:$a Q2:$b
+        echo FIT - sig_a:$sig_a sig_b:$sig_b rms:$rms2
+       
+        set m2=1/$a
+        set q2=-$b/$a
+       
+        set mbilin=((m1/sqrt(1+m1**2))+(m2/sqrt(1+m2**2)))/((1/sqrt(1+m1**2))+(1/sqrt(1+m2**2)))
+        set qbilin=((q1/sqrt(1+m1**2))+(q2/sqrt(1+m2**2)))/((1/sqrt(1+m1**2))+(1/sqrt(1+m2**2)))
+       
+        echo FIT Bilin - M: $(mbilin) Q3: $(qbilin)
+        set xx3=xx
+        set yy3=qbilin+mbilin*xx3		
+        connect xx3 yy3
+	
+correl     2
+	   echo 
+	   echo Number of data: $(dimen($1))
+	
+	   echo 
+	   rxy $1 $2 rms_val
+	   echo rxy: $rms_val 
+ 	
+	   spear $1 $2 sprank_i t2
+	   noncor $(dimen($1)) $sprank_i 10000
+
+noncor 3     #Qual'e la prob che la correlazione osservata tra due set
+	     #di dati sia fittizia, ovvero che la correlazione osservata
+	     #sia casuale e le quantita NON siano effettivamente correlate?
+	     #1 input: numero di punti sperimentali
+	     #2 input: Spearman Rank correlation coeff. (usare macro "spear")
+	     #3 input: numero di set casuali generati... piu' e' alto e piu' e'
+	     #         precisa la prob (ma diventa molto lento!)
+	     #Esempio: x e y sono i vettori, ciascuno di n elementi, e
+	     #vogliamo trovare la prob di NON correlazione.
+	     #: spear x y spear_rank t
+	     #: noncor $n $spear_rank 10000 
+	     define n $1
+	     define rs0 $2
+	     define prove $3
+	     define favorevoli 0
+	     do i=1,$prove{
+	     set vec1=random($n)
+	     set vec2=random($n)
+	     spear vec1 vec2 rs t
+	     define rs (abs($rs))
+	     if($rs>$rs0){define favorevoli ($favorevoli+1)}}
+	     define prob ($favorevoli/$prove)
+	     echo The probability of Non-Correlation is $prob.
+
+
+
+medvec 3
+ # computes the median of 3 vectors
+ # $1-$3: input vectors
+	set _c1=($2>$1)?1:0
+	set _c2=($3>$2)?1:0
+	set _c3=($1>$3)?1:0
+	
+	set $0=(_c1&_c2)?$2:9999
+	set $0=(_c1&_c3)?$1:$0
+	set $0=(_c2&_c3)?$3:$0
+	set $0=(!_c1&!_c2)?$2:$0
+	set $0=(!_c1&!_c3)?$1:$0
+	set $0=(!_c2&!_c3)?$3:$0
+	
+lin_interp 4
+	if(dimen($1)!=$(dimen($2))){
+	   echo ERROR! Dimensions mismatch
+	   return
+	}
+	if(dimen($1)<2){
+	   echo ERROR! Input vector's dimension has to be > 1
+	   return
+	}
+	
+	set dimen($4)=dimen($3)
+	
+	do _j=0,dimen($3)-1{
+	   set tmp_x1=$1 if($1<=$3[$_j])
+	   set tmp_x2=$1 if($1>=$3[$_j])
+	   set tmp_y1=$2 if($1<=$3[$_j])
+	   set tmp_y2=$2 if($1>=$3[$_j])
+	   
+	   set tmp_x1s=$(tmp_x1[$(dimen(tmp_x1)-1)])
+	   set tmp_x2s=$(tmp_x2[0])
+	   set tmp_y1s=$(tmp_y1[$(dimen(tmp_y1)-1)])
+	   set tmp_y2s=$(tmp_y2[0])
+	   
+	   if(tmp_x1s==$(tmp_x2s)){ 
+	      set $4[$_j]=tmp_y1s 
+	   }else{
+	      set $4[$_j]=(tmp_y2s-tmp_y1s)/(tmp_x2s-tmp_x1s)*($3[$_j]-tmp_x1s)+tmp_y1s
+	   }
+	   
+	}
+
+	
+
+################## Cosmology setups ##################
+
+
+
+init_cosmo
+   # taken from Hogg (2000) (astro-ph/9905116)
+        define omegam ? <Insert Omega Matter:>
+        define omegal ? <Insert Omega Lambda:>
+        define H0 ? <Insert H0 [km/s/Mpc]:>
+  
+	define Omega_m  $omegam
+	define Omega_L  $omegal
+	define Omega_k  $(1.-$Omega_m-$Omega_L)
+	define clight   299792.458  # [km/s]
+	
+	set _zz1=0.,0.4999,0.0001
+	set _zz2=0.5,15,0.001
+	set _zz=_zz1 concat _zz2
+	
+	# Hubble distance and time:
+	set dist_H=$clight/$H0      # [Mpc]
+	set t_H=978./$H0            # [Gyr]
+		
+	# comoving distance (line-of-sight) and lookback time:
+	set Ez=sqrt($Omega_m*(1.+_zz)**3+$Omega_k*(1.+_zz)**2+$Omega_L)
+	set dimen(_dzz)=dimen(_zz)
+	set dimen(dist_C)=dimen(_zz)
+	set dimen(lbt)=dimen(_zz)
+	
+	do i=0,dimen(_dzz)-2{
+           set _dzz[$i]=$(_zz[$i+1])-$(_zz[$i])	
+	}
+	do i=0,dimen(_zz)-1{
+	   set temp_dzz=_dzz if(_zz<=$(_zz[$i]))
+	   set temp_Ez =Ez   if(_zz<=$(_zz[$i]))
+	   set temp_zz =_zz  if(_zz<=$(_zz[$i]))
+	   set dist_C[$i]=dist_H*sum(temp_dzz/temp_Ez)
+	   set lbt[$i]=t_H*sum(temp_dzz/temp_Ez/(1.+temp_zz))
+	}
+	
+	# transverse comoving distance:
+	set dist_m=dist_C
+	if($Omega_k>1.e-6){  # the 1.e-6
+	   set dist_m=dist_H/sqrt($Omega_k)*sinh(sqrt($Omega_k)*dist_C/dist_H)
+	}
+	if($Omega_k<-1.e-6){
+	   set dist_m=dist_H/sqrt(-$Omega_k)*sin(sqrt(-$Omega_k)*dist_C/dist_H)
+	}
+	
+	# angular diameter distance:
+	set dist_a=dist_m/(1.+_zz)
+	set dist_1as=dist_a*pi/180./3.6 # [kpc/arcsec]
+	
+	# luminosity distance:
+	set dist_l=(1.+_zz)*dist_m
+	set DM=5.*lg(dist_l/0.00001)
+
+	# comoving volume per solid angle in dz:
+	set dV_C = dist_H*(1.+_zz)**2*(dist_a**2)/Ez*_dzz
+
+	# all-sky comoving volume up to redshift _zz:
+	#if($Omega_k>0){
+	#   set V_C=(4.*pi*dist_H**3/2./$Omega_k)* \
+	#      ((dist_m/dist_H)*sqrt(1.+$Omega_k*(dist_m/dist_H)**2)-(1./sqrt($Omega_k))*asinh(sqrt($Omega_k)*dist_m/dist_H))
+	#}
+	#if($Omega_k==0){
+	   set V_C=4.*pi*dist_m**3/3.
+	#}
+	#if($Omega_k<0){
+	#   set V_C=(4.*pi*dist_H**3/2./(abs($Omega_k)))* \
+	#      ((dist_m/dist_H)*sqrt(1.+$Omega_k*(dist_m/dist_H)**2)-(1./sqrt(-$Omega_k))*asin(sqrt(-$Omega_k)*dist_m/dist_H))
+	#}
+
+	# Probability of intersecting objects with:
+	#     comoving density    n = 1 Mpc-3 
+	#     cross section       sigma= 1 Mpc2
+	# in a redshift bin dz:
+	
+	set dPinterv =dist_H*(1.+_zz)**2/Ez*_dzz
+	
+	## angular diameter distance between 2 objects at z1 and z2 
+	## (used for gravitational lensing) (assume Omega_k>=0):
+	#set _z1=$z1
+	#set _z2=$z2
+	#dist_a12=1./(1+_z2)*(dist_m2*sqrt(1.+$Omega_k*(dist_m1/dist_H)**2) \
+	#   -dist_m1*sqrt(1.+$Omega_k*(dist_m2/dist_H)**2))
+
+	!\rm zeta_cosmo.dat
+
+	define print_noheader 1
+	write zeta_cosmo.dat "# Cosmological quantities computed assuming: "
+	write +zeta_cosmo.dat "# H0=$!H0 km/s/Mpc  Omega_m=$!Omega_m  Omega_L=$!Omega_L  Omega_k=$!Omega_k"
+	write +zeta_cosmo.dat "# "
+	write +zeta_cosmo.dat "#  (1) Redshift "
+	write +zeta_cosmo.dat "#  (2) Lookback time [Gyr]"
+	write +zeta_cosmo.dat "#  (3) Comoving distance (line-of-sight) 	    [Mpc]"
+	write +zeta_cosmo.dat "#  (4) Comoving distance (transverse)		    [Mpc]"
+	write +zeta_cosmo.dat "#  (5) Angular diameter distance 		    [Mpc/rad]"
+	write +zeta_cosmo.dat "#  (6) Angular scale				    [kpc/arcsec]"
+	write +zeta_cosmo.dat "#  (7) Luminosity distance			    [Mpc]"
+	write +zeta_cosmo.dat "#  (8) Distance modulus  			    [mag]"
+	write +zeta_cosmo.dat "#  (9) Differential comoving volume per redshift bin [Mpc3/sterad]"
+	write +zeta_cosmo.dat "# (10) All-sky comoving volume up to redshift z      [Mpc3]"
+	write +zeta_cosmo.dat "# (11) Probability of intervening objects	    [Mpc-3 Mpc2]"
+	write +zeta_cosmo.dat "# (12) Redshift bin"
+	write +zeta_cosmo.dat "# "
+	write +zeta_cosmo.dat "# (1)     (2)       (3)      (4)      (5)    (6)      (7)    (8)     (9)     (10)    (11) (12)"
+
+	print +zeta_cosmo.dat ' %7.4f %6.3f  %7.2f %7.2f %7.2f %6.3f %11.3f %5.2f %4.2e %5.2e %5.2f %5.3f\n' \
+	   {_zz lbt dist_C dist_m dist_a dist_1as dist_l DM dV_C V_C dPinterv _dzz}
+	define print_noheader 0
+
+	!mv zeta_cosmo.dat $macro2/../cosmo/
+	
+cdist	1
+	data "/scratch/home/cmazzucc/sm/cosmo/zeta_cosmo.dat"
+	read {_zz 1 _dist_C 3}
+	
+	set _inz=$1
+	spline _zz _dist_C _inz $0
+
+ctdist	1
+	data "/scratch/home/cmazzucc/sm/cosmo/zeta_cosmo.dat"
+	read {_zz 1 _dist_Ct 4}
+	
+	set _inz=$1
+	spline _zz _dist_Ct _inz $0
+
+
+ldist	1
+	data "/scratch/home/cmazzucc/sm/cosmo/zeta_cosmo.dat"
+	read {_zz 1 _dist_l 7 _DM 8}
+	
+	set _inz=$1
+	spline _zz _dist_l _inz $0
+	spline _zz _DM _inz DM
+
+adist	1
+	data "/scratch/home/cmazzucc/sm/cosmo/zeta_cosmo.dat"
+	read {_zz 1 _dist_a 5 _dist_1as 6}
+	
+	set _inz=$1
+	spline _zz _dist_a _inz $0
+	spline _zz _dist_1as _inz dist_1as
+
+adists 	1
+	data "/scratch/home/cmazzucc/sm/cosmo/zeta_cosmo.dat"
+	read {_zz 1 _dist_a 5 _dist_1as 6}
+	
+	set _inz=$1
+	spline _zz _dist_1as _inz $0
+
+zeta2lbtime 2
+	# $1=input vector with redshift
+	# $2=output vector with lookback time in Gyr
+	
+	data "/scratch/home/cmazzucc/sm/cosmo/z_time.txt"
+	read {_fz 1 _lbt 3}
+	
+	set _lbt=_lbt*1.e-9
+	set help_z=$1
+
+	spline _fz _lbt help_z help_t
+	
+	set $2=help_t
+
+ldist2z	34   	# return distance $3 (vec) in Mpc between redshift $1 and $2 (vec) 
+	    	# compute distance for a universe with Lamba!= 0
+	    	set _Z1 = $1
+		set _Z2 = $2
+		if($?4) {define H0 $4} 
+	    	set dimen(_DIST)=dimen(_Z1)
+	    	do i=0, dimen($1)-1 {
+	    	set _z=(_Z2[$i]),(_Z1[$i]),.01
+	    	set _dc = 1.0/(SQRT( (1+_z)**2 * (1+$omegam*_z) - _z*(2+_z)*$omegal ) )
+	    	intvec _dc _z (_Z2[$i]) (_Z1[$i]) dcomov avg
+	    	set _DIST[$i] = (  (3e5/$H0)*(1+(_Z1[$i]))*$dcomov )}
+		set $3 = _DIST
+
+
+propdist2z 3
+ # compute proper distance from z=$1 (z_min) to z=$2 (z_max) and put it in $3
+	define c 300000. # km/s
+	set _zmax=$2
+	set _zmin=$1
+	set _zzz=$(_zmin),$(_zmax),0.01
+	set dimen(tU)=dimen(_zzz)
+	do i=0,dimen(_zzz)-1{
+	   agetime $(_zzz[$i]) _tUniv
+	   set tU[$i]=10.**$_tUniv
+	}
+	set dimen(_dt)=dimen(_zzz)
+	set dimen(tott)=dimen(_zzz)
+	set _dt[0]=0.
+	set tott[0]=0.
+	do i=1,dimen(_dt)-1{
+	   set _dt[$i]=$(tU[$i])-$(tU[$i-1])
+	   set tott[$i]=$(tott[$i-1])-$(_dt[$i])
+	}
+
+	set $3=-sum($c*_dt*(1.+_zzz))*3.15e7/3.086e19
+
+
+
+
+
+
+gp_model 2
+	# adapted from Meiksin 2006, MNRAS, 365, 807
+	# compute the IGM attenuation due to Gunn-Peterson effect
+	# $1=wavelength vector, in [Ang]
+	# $2=redshift of the source
+	
+	# absorption due to the Lyman series:
+	set _n=2,31
+	define Ryd 911.26718  # Ang
+	set l0=$Ryd/(1.-1./(_n**2))
+	
+	do _i=2,31{
+	   set z$_i=$1/$(l0[$_i-2])-1.
+	   set cond_z$_i=(z$_i<$2)?1.:0.
+	}
+	
+	set tau_2=(z2<4.)?cond_z2*0.00211*(1.+z2)**3.7:cond_z2*0.00058*(1.+z2)**4.5
+	set tau_3=(z3<3.)?cond_z3*tau_2*0.348*(0.25*(1.+z3))**(1./3.):cond_z3*tau_2*0.348*(0.25*(1.+z3))**(1./6.)
+	set tau_4=(z4<3.)?cond_z4*tau_2*0.179*(0.25*(1.+z4))**(1./3.):cond_z4*tau_2*0.179*(0.25*(1.+z4))**(1./6.)
+	set tau_5=(z5<3.)?cond_z5*tau_2*0.109*(0.25*(1.+z5))**(1./3.):cond_z5*tau_2*0.109*(0.25*(1.+z5))**(1./6.)
+	set tau_6=cond_z6*tau_2*0.0722*(0.25*(1.+z6))**(1./3.)
+	set tau_7=cond_z7*tau_2*0.0508*(0.25*(1.+z7))**(1./3.)
+	set tau_8=cond_z8*tau_2*0.0373*(0.25*(1.+z8))**(1./3.)
+	set tau_9=cond_z9*tau_2*0.0283*(0.25*(1.+z9))**(1./3.)
+	
+	do _i=10,31{
+	   set tau_$_i=cond_z$_i*tau_9*720./($_i*($_i*$_i-1))
+	}
+	set dimen(tau_ly)=dimen($1)
+	
+	do _i=2,31{
+	   set tau_ly=tau_ly+tau_$_i
+	}
+	
+	# photoelectic absorption, contribution of optically thin 
+	# systems at the Lyman edge:
+	set _zL=$1/$Ryd-1.
+	
+	set tau_igm=(_zL<$2)?0.805*(1.+_zL)**3*(1./(1.+_zL)-1./(1.+$2)):0.
+	
+	# photoelectic absorption, contribution of Lyman Limit Systems:
+	define _No     0.25
+	define _beta   1.5 
+	define _gamma  1.5 
+	set _t0=($_beta-1.)/(1.-$_beta)
+	set _tA=_t0
+	do _n=1,10{
+	   set _t$_n=($_beta-1.)/($_n+1.-$_beta)*((-1)**$_n)/fact($_n)
+	   set _tA=_tA+_t$_n
+	}
+	
+	set _ta1=($_beta-1.)/(3.-$_gamma-1.)/(2-$_beta)*(-1)
+	set _tb1=(1.+$2)**($_gamma+1-3)*($1/$Ryd)**3-($1/$Ryd)**($_gamma+1)
+	set _tc1=_ta1*_tb1
+	set _tC=_tc1
+	do _n=2,10{
+	   set _ta$_n=($_beta-1.)/(3.*$_n-$_gamma-1.)/($_n+1-$_beta)*((-1)**$_n/fact($_n))
+	   set _tb$_n=(1.+$2)**($_gamma+1-3*$_n)*($1/$Ryd)**(3*$_n)-($1/$Ryd)**($_gamma+1)
+	   set _tc$_n=_ta$_n*_tb$_n
+	   set _tC=_tC+_tc$_n
+	}
+	
+	# _GG is the incomplete gamma function computed for (2-$_beta,1)
+	# but for simplicity we use only the simplified form valid ONLY
+	# if $_beta=1.5
+	set _GG=sqrt(pi)*erfc(1.) 
+	
+	
+	set tau_llsA=$_No/(4.+$_gamma-3.*$_beta)
+	set tau_llsB=(_GG-exp(-1)-_tA)
+	set tau_llsC=((1.+$2)**(-3*($_beta-1)+$_gamma+1)*($1/$Ryd)**(3*($_beta-1))-($1/$Ryd)**($_gamma+1.))
+	set tau_llsD=$_No*_tC
+	
+	set tau_lls=(_zL<$2)?tau_llsA*tau_llsB*tau_llsC-tau_llsD:0.
+	
+	# Total absorption:
+	set tau_tot=tau_ly+tau_igm+tau_lls
+	set $0=exp(-tau_tot)
+	
+
+
+
+plot_gp_model 3
+  # plotting utility associated to gp_model
+  # $1,$2: wavelength range, in Ang
+  # $3: source redshift
+	set ll=$1,$2,1.
+	
+	set tt=gp_model(ll,$3)
+
+	set tt_ly=exp(-tau_ly)
+	set tt_igm=exp(-tau_igm)
+	set tt_lls=exp(-tau_lls)
+	
+	erase
+	expand 1.75
+	lweight 3
+	define TeX_strings 1
+	
+	location 4500 31000 3500 31000
+	limits $1 $2 0 1
+	ctype dodgerblue
+	connect ll tt_ly
+	ctype red
+	connect ll tt_igm
+	ctype forestgreen
+	connect ll tt_lls
+	ctype 0
+	connect ll tt
+	
+	box
+	location 3500 31000 3500 31000
+	
+	xlabel "\lambda [\AA]"
+	ylabel "exp(-\tau)"
+	
+
+
+qso_noGP
+ # correct the Vanden Berk+01 quasar template for GP absorption in two ways:
+ # at 1010<lambda[Ang]<1216, it applies the GP model from Meiksin (see gp_model)
+ # at lambda<1010 Ang, it uses a power-law with slope=-1.3 extended down to 50 Ang
+ # Results are saved in y0c
+ 
+	#data qso_sdss.tab
+	data "$!macro2/../templates/qso_All_template.spc"
+	read {x0s 1 y0s 2}
+	minimaxi x0s minx0 maxx0
+	set x0=$minx0,$maxx0,1.
+	spline x0s y0s x0 y0
+	
+	set x4=x0*(1+4.)
+	set yGP=gp_model(x4,4.)
+	set yu=y0/yGP
+	set y0c=(x0<1010.)?21.*(x0/1450.)**0.:yu
+	set y0c=yu
+	
+	set xXUV=50.,1000.,1.
+	set yPL_XUV=21.*(xXUV/1450.)**0.
+	
+	
+	set x0=xXUV concat x0
+	set y0c=yPL_XUV concat y0c
+	
+
+
+qso_tracks 5
+  # $1-$2=color on the x axis
+  # $3-$4=color on the y axis
+  # $5=redshift vector
+	qso_noGP
+	set dimen(mag1)=dimen($5)
+	set dimen(mag2)=dimen($5)
+	set dimen(mag3)=dimen($5)
+	set dimen(mag4)=dimen($5)
+	 
+	do ij=0,dimen($5)-1{
+	   set x=x0*(1.+$5[$ij])
+	   set yGP=gp_model(x,$5[$ij])
+	   set y=y0c*yGP
+	   
+	
+	   magnitude2 $1
+	   set mag1[$ij]=$m1
+	   magnitude2 $2
+	   set mag2[$ij]=$m1
+	   magnitude2 $3
+	   set mag3[$ij]=$m1
+	   magnitude2 $4
+	   set mag4[$ij]=$m1
+	}
+	set col1=mag1-mag2
+	set col2=mag3-mag4
+	set col3=mag1-mag3
+	set col4=mag2-mag4
+	
+	
+extinction_law 2
+	# compute extinction law adopting the Calzetti+00 law
+	# this is measured at 1200 < lambda/[Ang] < 22000 and extrapolated eslewhere
+	
+	# $1=x [Ang]
+	# $2=E(B-V)
+
+	define R_V 4.05 # (+/- 0.80)
+	
+	set klambda1=2.659*(-2.156+15090./$1-0.198/($1/10000.)**2+0.011/($1/10000.)**3)+$R_V
+	set klambda2=2.659*(-1.857+1.040/($1/10000.))+$R_V
+	
+	set klambda=($1<6300.)?klambda1:klambda2
+
+	set Alambda=klambda*$2
+	
+	set ext=10.**(-0.4*Alambda)
+	
+	
+
+###################### Analysis ######################
+rwspec     1
+	   data $1.txt
+	   read {x 1 y 2}
+	   define OBJECT ? <Object name?>
+	   define spname ? <Insert spectrum filename:>
+	   aplot
+	   define cutplot ? <Cut the spectrum? 0=NO, 1=YES>
+	   if($cutplot==1){
+	      define xinf ? <Minimum wavelength: >
+	      define xsup ? <Maximum wavelength: >
+	      set y=y if(x>$xinf&x<$xsup)
+	      set x=x if(x>$xinf&x<$xsup)
+	      plot
+	   }
+	   findsexp x y 
+	   set y=y*10.**-$sexp
+	   aplot
+	   wspc $spname
+
+rwspecsdss 1
+	   data $1.txt
+	   read {expx 1 y 2}
+	   set x=10.**expx
+	   set y=y*10.**-17
+	   define OBJECT ? <Object name?>
+	   define spname ? <Insert spectrum filename:>
+	   aplot
+	   define cutplot ? <Cut the spectrum? 0=NO, 1=YES>
+	   if($cutplot==1){
+	      define xinf ? <Minimum wavelength: >
+	      define xsup ? <Maximum wavelength: >
+	      set y=y if(x>$xinf&x<$xsup)
+	      set x=x if(x>$xinf&x<$xsup)
+	      plot
+	   }
+	   findsexp x y 
+	   set y=y*10.**-$sexp
+	   aplot
+	   wspc $spname
+
+spc2ps     1
+	   data $1
+	   read {namefile 1.s}
+	   do i=0,dimen(namefile)-1,1{
+	   rspc $(namefile[$i])
+           plot
+	   define okay1 ? <Ok? 0=NO 1=YES>
+	   if($okay1==0){aplot
+	   zoom
+	   wspc $(namefile[$i])}
+	   device postfile $(namefile[$i]).ps
+	   plot
+	   device x11}
+
+
+rspce      1 
+	   data "$!1.spc"
+	   define OBJECT read 1 4 echo ... Object: $OBJECT
+	   define x1 read 3 2 define x2 read 3 3
+	   define y1 read 3 4 define y2 read 3 5
+	   define sexp read 3 6  # power scale units (10^sexp)
+	   read {x 1 y 2 ey 3}
+	
+
+bindata 7
+ # compute the median values of data in ($1,$2) binned as vector $3
+ # and put them in vectors ($4,$5) and quartile in ($6,$7)
+
+	set _inputx=$1
+	set _inputy=$2
+ 	set _bin=$3
+	
+	set dimen(_outx)=$(int($(dimen(_bin))-1))
+	set dimen(_outy)=$(int($(dimen(_bin))-1))
+	set dimen(_outsx)=$(int($(dimen(_bin))-1))
+	set dimen(_outsy)=$(int($(dimen(_bin))-1))
+
+	do i=0,dimen(_bin)-2{
+	   set _inputx_$i=_inputx if(_inputx>$(_bin[$i])&_inputx<$(_bin[$i+1]))
+	   set _inputy_$i=_inputy if(_inputx>$(_bin[$i])&_inputx<$(_bin[$i+1]))
+	   stats_med _inputx_$i meax seax
+	   stats_med _inputy_$i meay seay
+	   set _outx[$i]=$meax
+	   set _outy[$i]=$meay
+	   set _outsx[$i]=$seax
+	   set _outsy[$i]=$seay
+	}
+	set $4=_outx
+	set $5=_outy
+        set $6=_outsx
+        set $7=_outsy
+	
+set_nu  2
+ # $1 = wavelength [A]
+ # $2 = specific flux F_lambda [erg/s/cm2/A]
+ 	define clightCM ($clight*1.e5)                # c [cm/s]
+	set nu=$clightCM/($1*1.e-8)                   # nu [Hz]
+	set fnu=$2*(10**$sexp)*(1.e8)*$clightCM/nu/nu # F_nu [erg/s/cm2/Hz]
+	set nufnu=fnu*nu                              # nu F_nu [erg/s/cm2]                
+	
+plot_nu
+	erase
+	expand 1.25001
+	
+	define nx1 $($clightCM*1.e8*1.e-15/$x2)
+	define nx2 $($clightCM*1.e8*1.e-15/$x1)
+
+	limits $nx1 $nx2 fnu
+	box
+	xlabel Frequency [\times 10^{15} Hz]
+	ylabel "F_\nu [\times 10^{$!sexp} erg/s/cm^2/Hz]"
+	set _nu=nu*1.e-15
+	connect _nu fnu
+
+plot_nfn
+	erase
+	expand 1.25001
+	define nx1 $($clightCM*1.e8*1.e-15/$x2)
+	define nx2 $($clightCM*1.e8*1.e-15/$x1)
+	set _nu=nu*1.e-15
+	set _nufnu=nufnu*1.e13
+
+	limits $nx1 $nx2 _nufnu
+	box
+	xlabel Frequency [\times 10^{15} Hz]
+	ylabel "\nu F_\nu [\times 10^{$!($!sexp+13)} erg/s/cm^2]"
+	connect _nu _nufnu
+
+radec	4
+	set rdigits=($3>0)?3+$3:2
+	set ddigits=($4>0)?3+$4:2
+
+	set rah=atof(substr($1,0,2))
+	set ram=atof(substr($1,3,2))
+	set ras=atof(substr($1,6,$(rdigits)))
+
+	set decsgn=(substr($2,0,1)=='+')?1:-1
+	set decd=atof(substr($2,1,2))
+	set decm=atof(substr($2,4,2))
+	set decs=atof(substr($2,7,$(ddigits)))
+
+	set ra=15.*(rah+ram/60.+ras/3600.)
+	set dec=decsgn*(decd+decm/60.+decs/3600.)
+
+	#echo $(ra) $(dec)
+
+s_radec	2
+	set ra_in=$1
+	set dec_in=$2
+	
+	set Trah=int(ra_in/15.)
+	set Tram=int(60.*(ra_in/15.-Trah))
+	set Tras=60.*(60.*(ra_in/15.-Trah)-Tram)
+
+	set Tdecd=int(dec_in)
+	set Tdecm=int(abs(60.*(dec_in-Tdecd)))
+	set Tdecs=abs(60.*(60.*abs(dec_in-Tdecd)-Tdecm))
+	
+	set rah=string(Trah)
+	set ram=string(Tram)
+	set ras=(abs(Tras)<10.)?sprintf('%4.2f',Tras):sprintf('%5.2f',Tras)
+	set decd=string(abs(Tdecd))
+	set decm=string(Tdecm)
+	set decs=(abs(Tdecs)<10.)?sprintf('%3.1f',Tdecs):sprintf('%4.1f',Tdecs)
+	
+	set rah=(abs(Trah)<10.)?'0'+rah:rah
+	set ram=(abs(Tram)<10.)?'0'+ram:ram
+	set ras=(abs(Tras)<10.)?'0'+ras:ras
+	set decm=(abs(Tdecm)<10.)?'0'+decm:decm
+	set decs=(abs(Tdecs)<10.)?'0'+decs:decs
+
+	set decd=(dec_in>=10.)?'+'+decd:decd
+	set decd=(dec_in>=0.&dec_in<10.)?'+0'+decd:decd
+	set decd=(dec_in<0.&dec_in>-10.)?'-0'+decd:decd
+	set decd=(dec_in<=-10.)?'-'+decd:decd
+
+	
+	set s_ra=rah+':'+ram+':'+ras
+	set s_dec=decd+':'+decm+':'+decs
+
+
+redshift 1
+	set y=y*(1+$1)
+	set x=x/(1+$1)
+
+
+findsexp 2
+	set yred=$2 if($1>$fx1&$1<$fx2)
+	stats yred mea pea sea
+	define lgmea $(lg($mea))
+	define sexp $(int(lg($mea))-1)
+
+
+redphoto 34
+  # compute photometry of source $1 (spectrum filename) at redshift(s)
+  # $2 (vector) in filter $3 and save it in vector redphoto
+  # $4 if present and non-zero, it applies Meiksin's IGM absorption models
+	data "$!1"
+	read {x0 1 y0 2}
+	
+	set dimen(redphoto)=dimen($2)
+	
+	do ji=0,dimen($2)-1{
+	   set x=x0*(1.+$($2[$ji]))
+	   set y=y0/(1.+$($2[$ji]))
+	   if($?4&$4>0){
+	      set tt=gp_model(x,$($2[$ji]))
+	   }
+	   set y=y*tt
+	   magnitude2 $3
+	   set redphoto[$ji]=$m1
+	}
+	
+	set $0=redphoto
+	
+	
+magnitude  2
+	   data "$!macro2/../filters/filter_list.tab"
+	   read {filters 1.s filt_zpt 3 filt_files 5.s}
+	   echo $1 $2
+	   
+           set zpt1 = filt_zpt if ('$2' == filters)  # zeropoint
+           set file1 = filt_files if ('$2' == filters)  # file name
+
+           define file1 (file1[0])
+
+           # reads filters responce curve
+
+           data "$!macro2/../filters/$!file1" read { x1 1 y1 2}   # read filter
+
+	   #data $1.spc
+	   #read{xs 1 ys 2}
+	   #if($sexp<0){set ys=ys*10**($sexp)}
+           rspc $1 
+	  # plot
+	   set xs=x
+	   set ys=y
+	   if($sexp<0){set ys=ys*10**($sexp)}
+           # resample template spectrum to 1A resolution
+	   echo $(xs[0]) $(xs[$(dimen(xs)-1)])
+           set x = $(xs[0]),$(xs[$(dimen(xs)-1)]),10
+           spline xs ys x y
+	   
+           # resample FIRST filter and computes flux using the template at REST FRAME  
+ 
+           spline x1 y1 x yf1							       
+           # remove spurious oscillations in the filter transmission due to resampling 
+           set yf1 =  x<x1[0] ? 0 : yf1 					       
+           set yf1 = x>x1[dimen(x1)-1] ? 0 : yf1 				       
+           									       
+
+           # compute flux in the first band					       
+           define f1 (sum(y*yf1)/sum(yf1))					       
+           define m1 (-2.5*lg($f1)+zpt1)
+	   define flux15 $(($f1)*10**15)					       
+            define flux15 (int($flux15*1000)/1000)
+            define m1 (int($m1*1000)/1000)
+	   echo $2 rough magnitude = $m1 mag
+	   echo $2 flux = $flux15 E-15 erg/s/cm2/A
+
+
+magnitude2 1
+   # same as magnitude but assuming that the spectrum has been already read
+   # and saved in (x,y)
+	   #data "$!macro2/../filters/filter_list.tab"
+           data "/scratch/home/cmazzucc/sm/filters/filter_list.tab"
+	   read {filters 1.s filt_zpt 3 filt_files 5.s}
+	   echo $1
+	   
+           set zpt1 = filt_zpt if ('$1' == filters)  # zeropoint
+           set file1 = filt_files if ('$1' == filters)  # file name
+
+           define file1 (file1[0])
+
+           # reads filters responce curve
+
+           #data "$!macro2/../filters/$!file1" read { x1 1 y1 2}   # read filter
+	   data "/scratch/home/cmazzucc/sm/filters/$!file1" read { x1 1 y1 2}   # read filter
+
+	   set xs=x
+	   set ys=y
+	   
+           # resample template spectrum to 1A resolution
+	   #echo $(xs[0]) $(xs[$(dimen(xs)-1)])
+           #set x = $(xs[0]),$(xs[$(dimen(xs)-1)]),10
+           #spline xs ys x y
+	   
+           # resample FIRST filter and computes flux using the template at REST FRAME  
+ 
+           spline x1 y1 x yf1							       
+           # remove spurious oscillations in the filter transmission due to resampling 
+           set yf1 =  x<x1[0] ? 0 : yf1 					       
+           set yf1 = x>x1[dimen(x1)-1] ? 0 : yf1 				       
+           									       
+
+           # compute flux in the first band					       
+           define f1 (sum(y*yf1)/sum(yf1))					       
+           define m1 (-2.5*lg($f1)+zpt1)
+	   define flux15 $(($f1)*10**15)					       
+            define flux15 (int($flux15*1000)/1000)
+            define m1 (int($m1*1000)/1000)
+	   echo $1 magnitude = $m1 mag
+	   echo $1 flux = $flux15 E-15 erg/s/cm2/A	
+
+automag 1  
+	data $1
+	read {objname 1.s}
+	
+	write +specmag.dat "# Filename  specmag(R) specmag(r) specmag(V)"
+	do i=0,dimen(objname)-1{
+	   magnitude $(objname[$i]) R 
+	   define Rmag $m1
+	   magnitude $(objname[$i]) r 
+	   define rmag $m1
+	   magnitude $(objname[$i]) V 
+	   define Vmag $m1
+	   write +specmag.dat $(objname[$i]) $Rmag $rmag $Vmag
+	}
+
+
+filt_z  1
+ # $1=input list of z
+	data "$!macro2/../templates/mannucci_E.tab"
+	read {xgE 1 ygE 2}
+	
+	data "$!macro2/../filters/filter_u_gunn.tab"
+	read {lfu 1 yfu 2}
+
+	data "$!macro2/../filters/filter_g_gunn.tab"
+	read {lfg 1 yfg 2}
+
+	data "$!macro2/../filters/filter_r_gunn.tab"
+	read {lfr 1 yfr 2}
+
+	data "$!macro2/../filters/filter_i_gunn.tab"
+	read {lfi 1 yfi 2}
+
+	data "$!macro2/../filters/filter_z_gunn.tab"
+	read {lfz 1 yfz 2}
+
+	data "$!macro2/../filters/filter_Y.tab"
+	read {lfY 1 yfY 2}
+
+	data "$!macro2/../filters/filter_J.tab"
+	read {lfJ 1 yfJ 2}
+
+	data "$!macro2/../filters/filter_H.tab"
+	read {lfH 1 yfH 2}	
+	
+	data "$!macro2/../filters/filter_Ks.tab"
+	read {lfK 1 yfK 2}	
+	
+	data "$!macro2/../filters/filter_B_johnson.tab"
+	read {lfB 1 yfB 2}
+
+	data "$!macro2/../filters/filter_V_johnson.tab"
+	read {lfV 1 yfV 2}
+
+	data "$!macro2/../filters/filter_R.tab"
+	read {lfR 1 yfR 2}	
+	
+	data "$!macro2/../filters/filter_I_cousin.tab"
+	read {lfI 1 yfI 2}	
+	
+	set yfY=yfY/100.
+	set yfJ=yfJ/100.
+	set yfH=yfH/100.
+	set yfK=yfK/100.
+	
+	set lfY=lfY/1000.
+	set lfJ=lfJ/1000.
+	set lfH=lfH/1000.	
+	set lfK=lfK/1000.	
+
+	set lfB=lfB/10000.
+	set lfV=lfV/10000.
+	set lfR=lfR/10000.      
+	set lfI=lfI/10000.      
+	set lfu=lfu/10000.
+	set lfg=lfg/10000.
+	set lfr=lfr/10000.
+	set lfi=lfi/10000.
+	set lfz=lfz/10000.
+	set yfB=yfB
+	set yfV=yfV
+	set yfR=yfR	 
+	set yfI=yfI	 
+	set yfu=yfu
+	set yfg=yfg
+	set yfr=yfr
+	set yfi=yfi
+	set yfz=yfz
+	set yfBz=yfB
+	set yfVz=yfV
+	set yfRz=yfR	  
+	set yfIz=yfI	  
+	
+	set input_z=$1
+	set lab_z=$1
+
+	set lab_z=string(lab_z)
+	
+	define nline $(dimen(input_z))
+
+	define xpos 0.35
+	define ypos 0.9
+	
+	
+	erase
+	expand 1.250001
+	lweight 2
+	define TeX_strings 1
+	
+	#limits 0.7 2.7 0 1.4
+	limits 0.3 1.1 0 1.4
+
+
+	do i=0,$nline-1{
+	   set xgEz=xgE*(1+$(input_z[$i]))/10000.
+	   set lfBz=lfB*(1+$(input_z[$i]))
+	   set lfVz=lfV*(1+$(input_z[$i]))
+	   set lfRz=lfR*(1+$(input_z[$i]))
+	   set lfIz=lfI*(1+$(input_z[$i]))
+	   
+	   location 3500 31000 $(int(3500+27500./$nline*$i)) $(int(3500+27500./$nline*($i+1)))
+	   if($i==0){box}else{box 0 2 0 0}
+	   ctype 0
+	   connect xgEz ygE
+	   ctype blue
+	   ltype 2
+	   connect lfY yfY
+	   connect lfJ yfJ
+	   connect lfH yfH
+	   connect lfK yfK
+	   connect lfu yfu
+	   connect lfg yfg
+	   connect lfr yfr
+	   connect lfi yfi
+	   connect lfz yfz
+	   #relocate 0.43 0.1
+	   #putlabel 5 B
+	   #relocate 0.53 0.1
+	   #putlabel 5 V
+	   #relocate 0.60 0.1
+	   #putlabel 5 R
+	   #relocate 0.80 0.1
+	   #putlabel 5 I
+	   relocate 0.35 0.1
+	   putlabel 5 u
+	   relocate 0.5 0.1
+	   putlabel 5 g
+	   relocate 0.63 0.1
+	   putlabel 5 r
+	   relocate 0.75 0.1
+	   putlabel 5 i
+	   relocate 0.9 0.1
+	   putlabel 5 z
+	   
+	   relocate 1.01 0.1
+	   putlabel 5 Y
+	   relocate 1.25 0.1
+	   putlabel 5 J
+	   relocate 1.65 0.1
+	   putlabel 5 H
+	   relocate 2.1  0.1
+	   putlabel 5 K
+	   ctype red
+	   ltype 1
+	   connect lfBz yfBz
+	   connect lfVz yfVz
+	   connect lfRz yfRz
+	   connect lfIz yfIz
+	   if($(0.43*(1+$(input_z[$i])))<$fx2){
+	      relocate $(0.43*(1+$(input_z[$i]))) 1.2
+	      putlabel 5 B
+	   }
+	   if($(0.53*(1+$(input_z[$i])))<$fx2){
+	      relocate $(0.53*(1+$(input_z[$i]))) 1.2
+	      putlabel 5 V
+	   }
+	   if($(0.60*(1+$(input_z[$i])))<$fx2){
+	      relocate $(0.60*(1+$(input_z[$i]))) 1.2
+	      putlabel 5 R
+	   }
+	   if($(0.80*(1+$(input_z[$i])))<$fx2){
+	      relocate $(0.80*(1+$(input_z[$i]))) 1.2
+	      putlabel 5 I
+	   }
+	   ltype 0
+	   ctype 0
+	   expand 1.7001
+	   relocate $xpos $ypos 
+	   putlabel 6 z=$(lab_z[$i])
+	   expand 1.25
+	   
+	}	
+
+	location 3500 31000 3500 31000
+	xlabel "Wavelength [\mu m]"
+	ylabel Specific flux [a.u.]
+
+agg_filter 1
+	# $1 = threshold for rejection
+	set _y=y
+	do i=1,dimen(x)-2{
+	   set _y[$i]=(abs(_y[$i]-(_y[$i-1]+_y[$i+1])/2.)<$1)?$(_y[$i]):($(_y[$i-1])+$(_y[$i+1]))/2.
+	}
+	set y=_y
+
+
+filter_pivot_lambda 1
+  # compute pivot wavelength of an input filter
+	data "$!1"
+	read {x 1 y 2}
+	
+	set dimen(dx)=dimen(x)
+	
+	do i=1,dimen(x)-1{
+	   set dx[$i]=x[$i]-x[$i-1]
+	}
+	set dx[0]=dx[1]
+	
+	set $0=sum(dx*y*x)/sum(dx*y)
+	
+	echo $($0)
+	erase
+	expand 1.75
+	lweight 3
+	define TeX_strings 1.s
+	
+	limits x y
+	box
+	connect x y
+	vline $($0) 3 3
+	xlabel "\lambda  [\AA]"
+	ylabel "Efficiency"
+	
+	
+	

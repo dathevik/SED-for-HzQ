@@ -1,0 +1,20 @@
+macro read "/home/mazzucchelli/sm/tools/rmac_v7.sm"
+data spex-prism_2MASSIJ0415195-093506_20030917_BUR04B.txt
+data spex"-"prism_2MASSIJ0415195-093506_20030917_BUR04B.txt
+data spex"-"prism_2MASSIJ0415195"-"093506_20030917_BUR04B.txt
+read {w 1 f 2}
+limits w f
+box
+points w f
+ptype 10 3
+expand 1.5
+points w f
+ctype red
+connect w f
+data "../LDwarf/spex"-"prism_2MASSWJ1506544"+"132106_20060410_BUR07C.txt"
+data "../LDwarf/spex-prism_2MASSWJ1506544+132106_20060410_BUR07C.txt"
+read {wL 1 fL 2 }
+ctype 0
+ctype blue
+points wL fL
+quit

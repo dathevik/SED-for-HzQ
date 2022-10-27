@@ -1,0 +1,16 @@
+#--------------------
+# Tabel 1 from N. Skrzypek et al.  2015
+#-----------------------
+# Colors of brown dwarf templates (M,T,L)
+# Magnitudes are sdss ukidss and wise filters
+# All magnitudes are in Vega system
+#----------------------
+#
+# Sp.T i-z z-Y Y-J J-H H-K K-W1 W1-W2
+#
+  M4 0.91 0.47 0.55 0.45 0.32 0.11 0.17
+  M5 0.91 0.47 0.55 0.45 0.32 0.11 0.17
+  M6 1.45 0.60 0.67 0.53 0.39 0.22 0.21
+  M7 1.77 0.70 0.78 0.56 0.44 0.25 0.24
+  M8 1.93 0.77 0.87 0.58 0.47 0.26 0.26
+  M9 1.99 0.82 0.96 0.60 0.51 0.27 0.27

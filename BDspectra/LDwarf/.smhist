@@ -1,0 +1,10 @@
+data spex-prism_2MASSJ21580457-1550098_20070927_KIR10A.txt
+data spex"-"prism_2MASSJ21580457"-"1550098_20070927_KIR10A.txt
+read {l 1 f 2}
+limits l f
+box
+connect l f
+quit
+macro read chidist_nR_RD.txt
+macro read chidist_nR_RD.sm
+quit

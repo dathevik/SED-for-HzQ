@@ -14,6 +14,7 @@ from astropy.utils.data import get_pkg_data_filename
 from astropy import units as u
 
 
+
 # I: Define the path and print a list of files from folders and subfolders
 my_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm'
 new_array = []  # make empty 1D array to collect files in the array

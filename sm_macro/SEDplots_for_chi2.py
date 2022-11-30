@@ -26,54 +26,36 @@ plt.rcParams['ytick.labelsize'] = 20
 plt.rcParams['xtick.labelsize'] = 20
 
 # I: Define the path and print a list of files from folders and subfolders
-my_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm'
-new_array = []  # make empty 1D array to collect files in the array
-count_the_files = -1
-print("THIS IS THE LIST OF ALL FILES -------------")
-# find all data files using loop
-for root, subFolder, files in os.walk(my_path):
-    for fileName in files:
-        if (fileName.endswith("txt")
-                or fileName.endswith("dat")
-                or fileName.endswith("tab")
-                or fileName.endswith("spc")):  # find files of the mentioned formats
-            filePath = os.path.join(root, fileName)
-            count_the_files += 1
-            new_array.append(filePath)  # make a list of files
-            print(count_the_files, filePath)
+my_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm/sm_macro'
+filters_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm/cigale_flux_ALL-SKY_delve.dat'
+BD_temp_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm/BDspectra/BDRA_fluxes_mJy.dat'
+QSO_temp_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm/temp_qso/Selsing2015_fluxes_mJy.dat'
+source_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm/BDspectra/LDwarf/spex-prism_2MASSIJ0103320+193536_20030919_CRU04A.txt'
 
 # II: Use Pandas to make data of the files into a Dataframe
-print(end="\n\n\n")
-data_array = np.array(new_array)
-read_file = data_array[180]
-print("DATA INSIDE", read_file, "FILE")
-# Using csv.reader to open csv files
-with open(read_file, 'r') as file:
-    reader = csv.reader(file, delimiter='\t')
-    for row in reader:
-        data = pd.DataFrame(reader)
-print(data)
-
-# III: Make column-vector and write output in other file also skipping some rows
-data = data.drop(data.index[:14])
-wave = data[data.columns[0]]
-flux = data[data.columns[1]]
-error = data[data.columns[2]]
-wave = wave.astype(float) * 10000  # ---in Angstrom
-flux = flux.astype(float) * units.FLAM
+data_source = ascii.read(source_path)
+wave = data_source.columns[0]
+flux = data_source.columns[1]
+error = data_source.columns[2]
+wave = wave.astype(float)
+flux = flux.astype(float)
 error = error.astype(float)
-wave = np.array(wave.values)
-flux = np.array(flux.values)
-error = np.array(error.values)
-print("Flux column from ", read_file, "is ", flux)
+wave = np.array(wave)
+flux = np.array(flux)
+error = np.array(error)
 
-# open new txt file and write there the column
-# new_f = open('/home/dathev/PhD_Projects/4MOST/chicode_sm/data_array.txt', "w")
-# new_f.write(str(column_vector))
+#Plotting the spectrum of source file
+sp = SourceSpectrum(Empirical1D, points=wave, lookup_table=flux, keep_neg=True)
+sp.plot()
+plt.rcParams['figure.figsize'] = [20, 12]
+plt.rcParams['ytick.labelsize'] = 20
+plt.rcParams['xtick.labelsize'] = 20
+plt.savefig("spectrum_chi.png")
+plt.close()
+
 
 # IV: Define path of filters, read filters and plot them
-path_filters = r"/home/dathev/PhD_Projects/4MOST/chicode_sm/mag_from_spec/filters/DECam/"
-
+path_filters_decam = r"/home/dathev/PhD_Projects/4MOST/chicode_sm/mag_from_spec/filters/DECam/"
 
 def flux_from_magAB(magAB, ll):
     # ---- Obtain flux from AB magnitude and wavelength (in Angstrom) of the band
@@ -83,13 +65,15 @@ def flux_from_magAB(magAB, ll):
 
 # --- Read the filters files.
 # g_name = get_pkg_data_filename(os.path.join(path_filters, 'filter_g_decam.tab'))
-g_name = path_filters + 'filter_g_decam.tab'
+g_name = path_filters_decam + 'filter_g_decam.tab'
 bp_g = SpectralElement.from_file(g_name)
 # r_name = get_pkg_data_filename(os.path.join(path_filters, 'filter_r_decam.tab'))
-r_name = path_filters + 'filter_r_decam.tab'
+r_name = path_filters_decam + 'filter_r_decam.tab'
 bp_r = SpectralElement.from_file(r_name)
+# i_name = path_filters_decam + 'filter_i_decam.tab'
+# bp_i = SpectralElement.from_file(i_name)
 # z_name = get_pkg_data_filename(os.path.join(path_filters, 'filter_z_decam.tab'))
-z_name = path_filters + 'filter_z_decam.tab'
+z_name = path_filters_decam + 'filter_z_decam.tab'
 bp_z = SpectralElement.from_file(z_name)
 
 # Plotting the filters
@@ -103,7 +87,7 @@ plt.legend(loc='upper right', fontsize=22)
 plt.xlabel('Wavelength (Angstrom)', fontsize=20)
 plt.ylabel('Transmission', fontsize=20)
 plt.title("Filter Set", fontsize=20)
-plt.savefig(my_path + "/output/SED_filters.png")
+plt.savefig(my_path + "/output_test/SED_filters.png")
 plt.close()
 
 # ----Calculate the effective wavelength of the filters by interpolating with a reference spectrum flat in AB system
@@ -144,7 +128,7 @@ sp.plot()
 plt.rcParams['figure.figsize'] = [20, 12]
 plt.rcParams['ytick.labelsize'] = 20
 plt.rcParams['xtick.labelsize'] = 20
-plt.savefig(my_path + "/output/spectrum.png")
+plt.savefig(my_path + "/output_test/spectrum.png")
 plt.close()
 
 # ---- Normalize the spectrum at a given flux, taken from the observed object (test in our case here)
@@ -160,7 +144,7 @@ plt.legend(loc='upper right', fontsize=22)
 plt.xlabel('Wavelength (Angstrom)', fontsize=20)
 plt.ylabel('Flux (erg/s/cm2/A) ', fontsize=20)
 plt.title("Brown Dwarf (LDwarf) Normalized at z band", fontsize=20)
-plt.savefig(my_path + "/output/normalized_spectrum.png")
+plt.savefig(my_path + "/output_test/normalized_spectrum.png")
 plt.close()
 
 # Changing redshift of the spectrum
@@ -178,7 +162,7 @@ plt.plot(wave, sp_z6(wave), 'r', label='z=6')
 plt.legend(loc='upper right', fontsize=22)
 plt.xlabel('Wavelength (Angstrom)', fontsize=20)
 plt.ylabel('Flux (not normalized)', fontsize=20)
-plt.savefig(my_path + "/output/redshifted_spectrum.png")
+plt.savefig(my_path + "/output_test/redshifted_spectrum.png")
 plt.close()
 
 # ---Apply the absorption from the Intergalactic medium
@@ -203,7 +187,7 @@ plt.title("IGM Absoprtion", fontsize=20)
 plt.rcParams['figure.figsize'] = [20, 12]
 plt.rcParams['ytick.labelsize'] = 20
 plt.rcParams['xtick.labelsize'] = 20
-plt.savefig(my_path + '/output/IGM.png')
+plt.savefig(my_path + '/output_test/IGM.png')
 plt.close()
 
 # ---- Obtain fluxes from the spectra convolving with the passbands
@@ -221,7 +205,7 @@ sp_z = obs_z.as_spectrum(obs_z)
 sp_z.plot()
 plt.plot(lleff_ref_z().value, sp_flux_z, 'o', color='g', markersize=15, label="Flux z band effective")
 plt.plot(lleff_ref_z().value, flux_z, 'o', color='b', markersize=15, label="Flux z observed")
-plt.savefig(my_path + "/output/overlap.png")
+plt.savefig(my_path + "/output_test/overlap.png")
 plt.close()
 
 # ---Let's plot now the spectrum with the derived synthetic fluxes, and the observed fluxes
@@ -247,7 +231,7 @@ plt.legend(loc='upper right', fontsize=22)
 plt.xlabel('Wavelength (Angstrom)', fontsize=20)
 plt.ylabel('Flux (erg/s/cm2/A) ', fontsize=20)
 plt.title("Brown Dwarf (LDwarf) Normalized at z band and fluxes", fontsize=20)
-plt.savefig(my_path + '/output/normalized_with_filters.png')
+plt.savefig(my_path + '/output_test/normalized_with_filters.png')
 plt.close()
 
 

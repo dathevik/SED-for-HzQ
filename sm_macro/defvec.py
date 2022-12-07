@@ -45,3 +45,4 @@ width_values = ["n/d", "n/d", "n/d", "n/d", "n/d", "n/d", "n/d", "n/d", "n/d", "
 vec_fluxe_obs = np.array(width_values)
 print("WIDTHS OF WAVELENGTHS")
 print(vec_fluxe_obs)
+

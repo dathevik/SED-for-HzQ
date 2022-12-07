@@ -1,10 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 from astropy.io import ascii
 from astropy.table import Table
 
 from synphot import SourceSpectrum, units, SpectralElement, etau_madau, Observation
 from synphot.models import Empirical1D, BlackBodyNorm1D, ConstFlux1D
+
 
 #------------------------------- Define functions ---------------------------------
 
@@ -29,17 +31,17 @@ def flux_from_cgs_to_mJy(flux_cgs,ll):
 
 #------------------------------- Main code ---------------------------------
 # I: Define the path and print the data inside
-filters_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm/sm_macro/input test/cigale_flux_ALL-SKY_delve.dat'
-BD_temp_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm/sm_macro/input test/BDRA_fluxes_mJy.dat'
-QSO_temp_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm/sm_macro/input test/Selsing2015_fluxes_mJy.dat'
-QSO_spec_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm/sm_macro/input test/Selsing2015.dat'
-bdRA_path = '/home/dathev/PhD_Projects/4MOST/chicode_sm/sm_macro/input test/'
+# filters_path = r'/home/dathev/PhD_Projects/4MOST/chicode_sm/sm_macro/input test/cigale_flux_ALL-SKY_delve.dat'
+filters_path = os.path.abspath('input test/cigale_flux_ALL-SKY_delve.dat')
+BD_temp_path = os.path.abspath('input test/BDRA_fluxes_mJy.dat')
+QSO_temp_path = os.path.abspath('input test/Selsing2015_fluxes_mJy.dat')
+QSO_spec_path = os.path.abspath('input test/Selsing2015.dat')
+bdRA_path = os.path.abspath('input test/lrt_a07_BDs.dat')
 
 #--- CM: my path that I define to run this code in my laptop
 # filters_path = r'/mnt/Data/Tatevik/4most/tables/Victoria_full/cigale_flux_ALL-SKY_delve.dat'
 # BD_temp_path = r'/mnt/Data/Tatevik/chicode_sm/BDspectra/RAssef/BDRA_fluxes_mJy.dat'
 # QSO_temp_path = r'/mnt/Data/Tatevik/chicode_sm/temp_qso/Selsing2015_fluxes_mJy.dat'
-
 
 print("READING BD:", BD_temp_path, "FILE")
 data_bd_temp = ascii.read(BD_temp_path)
@@ -81,8 +83,8 @@ print("------------------------------------------ BD1 Template------------------
 print(BD_all_vec_flux[0])
 
 # -------- Read RAssef BD templates for plotting and comparing the results
-bdRA_name = bdRA_path+'lrt_a07_BDs.dat'
-bdRA_data = Table(ascii.read(bdRA_name))
+# bdRA_name = bdRA_path+'lrt_a07_BDs.dat'
+bdRA_data = Table(ascii.read(bdRA_path))
 bdRA_l1 = bdRA_data.columns[0]*10**4 #--AA
 bdRA_l2 = bdRA_data.columns[1]*10**4 #--AA
 bdRA_l = bdRA_l2 + (bdRA_l1 - bdRA_l2)/2. #---bin center in the template
